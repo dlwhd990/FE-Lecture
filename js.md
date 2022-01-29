@@ -463,4 +463,55 @@ global execution context는 어떤 함수 안에도 속해있지 않은 코드�
 
 Temporal Dead Zone
 
-+94번,95번 추가작성
+변수 선언 전에 해당 변수에 접근하는 것
+
+not defined가 아닌 cannot access before initialization 에러 발생
+(creation phase때 코드를 스캔하여 선언될 변수들을 미리 variable environment에 넣었기 떄문에 언젠간 선언될 것이라는 것을 알고있다.)
+
+<img src="./img/tdz.png">
+
+사진의 붉은 부분이 TDZ이다. 쉽게 말하면 변수가 선언되기 전 까지의 코드 부분이 TDZ라고 할 수 있다. 이 TDZ에서는 변수에 접근할 수 없다.
+
+<br>
+
+<br>
+
+## This
+
+- 모든 execution context (즉, 함수) 마다 생성되는 특별한 변수
+- static하지 않은 변수이다. this는 함수가 어떻게 호출되었는지에 따라 어떤 값을 가질 지 결정된다. 그리고 그 값은 <b style="color: skyblue">함수가 실제로 호출되었을 때에만 값이 지정된다.</b>
+
+<br>
+
+### this 값이 지정되는 경우 (함수 호출 방식)
+
+<br>
+
+1. method 호출
+
+- <b style="color: skyblue">자기 자신을 호출한 object가 this값이 된다.</b>
+
+<br>
+
+2. 일반적인 호출 (simple function call)
+
+- this = undefined (only in strict mode)
+- this = window obejct (global object) (not in strict mode)
+
+<br>
+
+3. arrow function 호출
+
+- this = 자신의 바로 위의 함수 (surrounding function, lexical this)
+
+<br>
+
+4. event listener로 호출
+
+- this = DOM element that the handler function attatched to
+
+<br>
+
+5. new 연산자로 호출
+
+- later section
