@@ -490,6 +490,10 @@ not defined가 아닌 cannot access before initialization 에러 발생
 1. method 호출
 
 - <b style="color: skyblue">자기 자신을 호출한 object가 this값이 된다.</b>
+- 만약 method가 arrow function 이라면 자신을 호출한 object가 아닌 lexical this
+- method 내부의 this가 자신의 바깥의 object를 가리키는 이유는 그 object의 내부에서 작성되었기 때문이 아니라 그 object가 호출(사용)했기 때문이다. 예를 들어 a,b object가 있고 a의 내부에 calcAge라는 method가 있고 이 method에서 this를 사용했을 때, b.calcAge = a.calcAge로 b에서 a의 method를 borrow했을 때 b.calcAge를 실행시켜보면 this는 b object를 가리키고 있는 것을 확인할 수 있다.
+  method가 작성된 곳은 a object이지만 b에서 빌려서 호출하니 this는 b를 가리키고 있는 것이다. 따라서 method의 this는 자신을 <b style="color: skyblue">호출한 obejct</b>를 가리킨다.
+- 만약 위와같은 방법으로 일반적인 변수에 method를 copy시켜서 함수를 호출시켰다면? => 일반적인 함수호출이기 때문에 2번과 같은 결과가 나온다.
 
 <br>
 
@@ -497,12 +501,17 @@ not defined가 아닌 cannot access before initialization 에러 발생
 
 - this = undefined (only in strict mode)
 - this = window obejct (global object) (not in strict mode)
+- method의 내부함수에서의 this는 2번과 같다. method의 경우에는 1번과 같이 동작하지만 method의 내부함수는 다르다.
+- 내부함수의 this문제 해결법에는 두가지가 있다.
+- 첫 번째로 method 내부에 const self = this로 변수를 만들어 주고 이를 내부함수에서 사용한다. (es6 이전의 방식)
+- 두 번째는 내부함수를 arrow function으로 선언하는 것이다. arrow function은 this값이 자신의 상위 스코프를 가리키게 되기 때문에 method와 같은 this를 갖게되고 이는 object의 scope와 같다. (es6+ 방식)
 
 <br>
 
 3. arrow function 호출
 
-- this = 자신의 바로 위의 함수 (surrounding function, lexical this)
+- this = 자신의 바로 위의 scope (surrounding function, lexical this)
+- method로는 arrow function을 사용하지 않는 것이 좋다. this 키워드가 자신의 바로 위의 scope로 지정되기 때문에 혼동(원하지 않는 결과)이 오기 쉽다. object literal의 코드블럭은 자신만의 scope를 갖게되는 것이 아니므로 object의 method로 arrow function을 사용했다면 this로 object의 내부의 값을 참조할 수 없다.
 
 <br>
 
@@ -515,3 +524,63 @@ not defined가 아닌 cannot access before initialization 에러 발생
 5. new 연산자로 호출
 
 - later section
+
+<br>
+
+<br>
+
+## Arguments
+
+- 파라미터로 넘긴 값들이 들어있는 객체
+- 함수 선언식, 함수 표현식에만 사용 가능하며 arrow function에서는 사용할 수 없다.
+
+<br>
+
+<br>
+
+## Primitives vs Objects
+
+<br>
+
+<img src="./img/cap.png">
+위의 코드에서 oldAge의 값은 age의 값이 변경되기 전의 값이 그대로 유지되었지만 me object의 age는 friend.age에 의해 함께 변한 것을 볼 수 있다. 그 이유는 무엇일까
+
+<br>
+
+### Primitive와 Object의 차이
+
+- primitive는 call stack에 저장되며 object는 memory heap에 저장된다. (이 둘은 JS Engine에 있음) <br>
+  primitive가 call stack에 저장된다는 말은 자신들이 선언된 execution context의 내부에 저장된다는 뜻이다. (call stack에 들어가는 execution context의 내부에 들어간다는 뜻)
+
+<br>
+
+<img src="./img/pri.png">
+
+(위의 사진 설명)
+
+<br>
+
+primitive value는 call stack의 자신이 선언된 execution context에 저장되며 address와 value를 갖는다. <br>
+먼저 age라는 변수를 선언하고 값을 30으로 넣어주었기 때문에 0001주소에 30이라는 값이 들어가게 되고 age 변수는 이를 가리키게 된다. <br>
+그리고 oldAge는 oldAge = age에 의해 age가 가리키고 있는 0001주소를 가리키게 되고 그렇기 때문에 똑같이 30이라는 값을 갖게된다.<br>
+하지만 age = 31에 의하여 age변수의 값은 31로 변경되었다.
+<br>
+여기서 주목할 점은, call stack의 memory adress의 값은 immutable(불변)하다는 것이다.
+<br>
+그렇기 때문에 0001 주소의 value가 31로 변경되는 것이 아니라 0002라는 새로운 주소에 31이라는 값을 넣고 age변수가 이를 가리키게 되는 것이다. <br>
+그렇기 때문에 age는 31, oldAge는 30의 값을 갖게되는 것이다.
+
+<br>
+<br>
+하지만 reference value (object)는 사진과 같이 값을 저장한다.<br>
+call stack의 메모리 공간의 0003이라는 주소에 D30F라는 value를 갖게된다.<br>
+object의 value는 call stack에 담기기에 너무 클 수 있기 때문에 비교적 unlimited한 heap에 저장하는 것이다. <br>
+여기서 주목할 점은 value가 일반적인 value가 아닌 memory heap의 주소라는 것이다. 이 value는 memory heap의 주소를 갖고 있기 때문에 이를 이용해서 heap에 저장되어있는 value를 갖고온다.
+<br>
+그렇기 때문에 friend.age를 변경하였을 때 heap의 value가 변경되고, me와 friend object는 동일한 address를 가리키고 있기 때문에 me.age까지 27로 변경된 것이다.
+<br>
+여기서 friend object는 const로 선언되었음에도 불구하고 변경이 가능했는데 그 이유는 call stack의 value는 변경되지 않았기 때문이다.
+<br>
+me와 friend object는 서로다른 identifier가 완전히 동일한 reference를 가리키고 있는 것이다.
+
+따라서 object를 copy하는 것은 진짜 copy하는 것이 아닌 그저 같은 reference를 가리키고 있는 또 다른 변수를 생성한 것 뿐이다.
