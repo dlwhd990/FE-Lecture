@@ -17,14 +17,16 @@
   <br>예를 들어, 선언된 적이 없는 변수에 값을 넣은 경우, strict mode가 아니라면 자동으로 선언해주어 값을 넣는다. 하지만 strict mode라면 not defined 에러가 발생한다.
 
 <br>
-ㅇ
+
 ### 함수 표현식?
 
 - 익명함수를 만들고 이를 변수에 저장하는 것
   (함수 선언식은 기본적인 방식)
 
-```html
-const calcAge = function (birthYear) { return 2022 - birthYear; }
+```js
+const calcAge = function (birthYear) {
+  return 2022 - birthYear;
+};
 ```
 
 <br>
@@ -360,7 +362,7 @@ global execution context는 어떤 함수 안에도 속해있지 않은 코드�
 
 - let과 const로 선언된 변수들만 적용되며 var은 이것에 적용되지 않는다 (ES6 이전에 나온 것이기 때문에)
 
-- 함수는 strict mode에서 block scope이다. (strict mode 아니면 function scope)
+- 함수 선언식은 strict mode에서 block scope이다. (strict mode 아니면 function scope)
 
 <br>
 
@@ -701,3 +703,140 @@ greeterHey는 함수가된다. (return된 함수를 받은 것)
 greet("Hello")("Steven") 이런 식으로도 사용 가능하다. 왜냐하면 greet("Hello") 자체가 함수이기 때문이다.
 
 greet 함수를 arrow function으로 다시 작성해보면 위의 greetArr와 같이 된다. arrow를 두개 사용한다.
+
+<br>
+
+## Call, Apply, Bind Methods
+
+<br>
+
+### 사용 예제
+
+<br>
+
+```js
+const lufthansa = {
+  airline: "Lufthansa",
+  iataCode: "LH",
+  bookings: [],
+  // book: function() {}
+  book(flightNum, name) {
+    console.log(
+      `${name} booked a seat on ${this.airline} flight ${this.iataCode}${flightNum}`
+    );
+    this.bookings.push({ flight: `${this.iataCode}${flightNum}`, name });
+  },
+};
+
+lufthansa.book(239, "Jonas Schmedtmann"); //method이므로 this = lufthansa
+lufthansa.book(635, "John Smith"); //method이므로 this = lufthansa
+
+const eurowings = {
+  airline: "Eurowings",
+  iataCode: "EW",
+  bookings: [],
+};
+
+const book = lufthansa.book; //first-class function 가능하기 때문에 book 변수에 method 함수 담기
+
+// Does NOT work
+book(23, "Sarah Williams"); // 일반적인 함수 호출, this = undefined(strict mode)이므로 에러 발생
+
+// Call method
+book.call(eurowings, 23, "Sarah Williams"); // 첫 번째 파라미터로 this binding할 객체 넣어주고 그 뒤로는 함수에 넣을 파라미터 넣어줌
+console.log(eurowings);
+
+book.call(lufthansa, 239, "Mary Cooper"); // 메소드를 원래 갖고있던 lufthansa 객체에도 가능
+console.log(lufthansa);
+
+const swiss = {
+  airline: "Swiss Air Lines",
+  iataCode: "LX",
+  bookings: [],
+};
+
+book.call(swiss, 583, "Mary Cooper"); // 또 다른 object로 테스트
+
+// Apply method
+const flightData = [583, "George Cooper"];
+book.apply(swiss, flightData); // apply는 call과 다르게 파라미터들을 배열 형태로 넘겨준다.
+console.log(swiss);
+
+// Bind Method
+const bookEW = book.bind(eurowings);
+const bookLH = book.bind(lufthansa);
+const bookLX = book.bind(swiss); //bind 안에는 this binding할 object 넣음
+
+bookEW(23, "Steven Williams"); //새로 선언한 변수로 함수 호출
+
+const bookEW23 = book.bind(eurowings, 23); //함수에 넣을 파라미터까지 넣을 수 있음
+bookEW23("Jonas Schmedtmann"); //미리 넣어뒀던 23을 안넣고 바로 이름만 넣어도 정상 작동
+bookEW23("Martha Cooper");
+
+const full = book.bind(swiss, 21, "JONG");
+full(); // 21, JONG 넣은 상태로 실행
+```
+
+> this가 어디에 바인딩 될 것인지 지목해줄 수 있다. (allows us to manually set 'this' keyword) <br>
+> 위의 코드에서 보이다시피 bind method는 새로운 함수를 return한다. 그래서 이 return된 함수를 변수에 저장해서 사용 가능한 것이다.
+
+<br>
+
+### Event Listener에서의 사용
+
+<br>
+
+```js
+// With Event Listeners
+lufthansa.planes = 300;
+lufthansa.buyPlane = function () {
+  console.log(this);
+
+  this.planes++;
+  console.log(this.planes);
+};
+
+lufthansa.buyPlane(); // method 호출 => this = lufthansa
+
+// Case 1 : this = DOM Element $(".buy")
+document
+  .querySelector(".buy") //
+  .addEventListener("click", lufthansa.buyPlane);
+
+// Case 2 : this = lufthansa
+document
+  .querySelector(".buy")
+  .addEventListener("click", lufthansa.buyPlane.bind(lufthansa));
+```
+
+> addEventListener에서 this는 이벤트가 발생한 DOM 엘리먼트가 된다. 따라서 lufthansa.buyPlane에서 의도한대로 동작하기 위해서는 bind method가 필요하다.
+
+<br>
+
+### Partial Application
+
+```js
+// Partial application
+const addTax = (rate, value) => value + value * rate;
+console.log(addTax(0.1, 200));
+
+const addVAT = addTax.bind(null, 0.23);
+// addTax 함수에서 rate 값을 고정시키고 싶다.
+// 그리고 이 함수에서 this값은 쓰이지 않기 때문에 this binding이 필요하지 않다.
+// 그렇기 때문에 addTax.bind(null,0.23)이 된다 (this binding 부분에 null 넣음)
+
+console.log(addVAT(100));
+console.log(addVAT(23));
+
+// addVAT 함수처럼 사용 가능한 함수 (rate 먼저 지정하고 return된 함수에서 고정된 rate값으로 사용)
+// higher-order function
+const addTaxRate = function (rate) {
+  return function (value) {
+    return value + value * rate;
+  };
+};
+
+const addVAT2 = addTaxRate(0.23);
+console.log(addVAT2(100));
+console.log(addVAT2(23));
+```
