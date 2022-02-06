@@ -13,6 +13,8 @@
 
 <br>
 
+> 실행 : npx tsc 파일명.ts
+
 ---
 
 <br>
@@ -108,11 +110,118 @@ str = 5; // Error : 이미 초기화 값 때문에 string 타입이 되었는데
 
 <br>
 
----
+### Type Alias
+
+```ts
+type Cominable = number | string; // union 형태의 타입을 미리 저장해놓고 여러번 사용가능
+type User = { name: string; age: number }; // union 아니어도 이렇게 저장 가능
+
+// 이렇게 타입 대신에 Combinable 넣는다.
+function combine(
+  input1: Combinable,
+  input2: Combinable,
+  resultConversion: string
+) {
+  // 함수 내용
+}
+
+// User을 함수의 타입 지정으로 넣는다. (user 파라미터의 프로퍼티 타입 지정을 미리 해놓고 이것을 사용)
+function greet(user: User) {
+  console.log("Hi, I am " + user.name);
+}
+```
 
 <br>
 
-> 실행 : npx tsc 파일명.ts
+### Function Return Type
+
+- 파라미터의 type만큼 return값의 타입도 중요하다.
+
+```ts
+// add 함수의 return값의 타입을 number로 지정
+// 아래의 경우에는 파라미터들의 타입과 연산 등을 고려하여
+// number값이 return되는 것을 TS가 추론했기 때문에 빨간 밑줄이 생기지 않음
+
+function add(num1: number, num2: number): number {
+  return num1 + num2;
+}
+
+// 마찬가지로 TS의 타입 추론에 의해 함수의 return 값의 타입이 number임을 추론하였는데
+// return 값의 타입을 string으로 명시해주었기 때문에 밑줄 + 컴파일 시 에러 발생
+
+function add(num1: number, num2: number): string {
+  return num1 + num2;
+}
+```
+
+<br>
+
+### Function Type
+
+- 함수는 변수에 저장될 수 있다. 그렇기 때문에 let으로 선언된 함수가 들어있는 변수는 후에 다른 타입으로 변경될 수 있다. 이 경우에 에러가 발생하기 때문에 이에 대한 처리도 필요하다.
+
+```ts
+function add(input1: number, input2: number) {
+  const result = input1 + input2;
+  return result;
+}
+
+let combine = add; // combine변수는 add와 같은 함수가 됨
+combine = 5; // 값이 5로 바뀜
+
+combine(10, 8); // combine은 함수가 아닌 5의 값을 갖고있기 때문에 에러 발생
+
+// 위와 같은 문제에 대비하기 위해 다음과 같이 작성한다.
+let combine: Function = add; // combine변수에 Function타입 명시
+combine = 5; // 위의 타입 명시에 의해 빨간줄
+
+// 하지만 위의 경우에도 이런 문제는 발생할 수 있다.
+function printResult(num: number) {
+  console.log("Result is: " + num);
+}
+
+let combine: Function = add;
+combine = printResult; // printResult도 함수이기 때문에 tsc에서 에러는 발생하지 않지만 파라미터의 개수가 맞지 않아 undefined 출력됨
+
+// 위의 문제 해결법 => Function 타입 지정
+let combine: (a: number, b: number) => number; // arrow function 형태로 타입 지정한다.
+combine = printResult; // 에러 발생
+```
+
+<br>
+
+### Callback Function Type
+
+```ts
+function addHandle(n1: number, n2: number, cb: (num: number) => void) {
+  const result = n1 + n2;
+  cb(result);
+}
+
+addHandle(10, 20, (result) => {
+  console.log(result);
+});
+
+//위의 코드에서 콜백함수 파라미터에 타입 지정을 함으로써 얻을 수 있는 이점은
+// 콜백함수 자체에 타입 지정을 안해주어도 result 파라미터가 number 타입일 것을 미리 추론하고 동작할 수 있기 때문이다.
+
+// 위에서 파라미터 1개임을 명시하였으므로 에러 발생
+addHandle(10, 20, (result, b) => {
+  console.log(result);
+});
+
+// addHandle함수에서 콜백함수의 return 타입은 void라고 명시해주었다. 하지만 콜백함수는 return을 사용하여 result를 return하였다. 그런데 에러는 발생하지 않는다.
+
+//그 이유는 콜백함수의 return 타입이 void라고 한 것은 addHandle함수가 콜백함수의 return값을 가지고 어떠한 일도 하지 않는다고 한것과 같아서 아예 신경을 쓰지 않기 때문이다.
+
+// 그렇기 때문에 return을 하는 것 자체는 전혀 문제가 되지 않으며 그 return된 값을 addHandle함수에서 사용하도록 하면 에러가 발생하게 된다.
+addHandle(10, 20, (result) => {
+  console.log(result);
+  return result; // 에러 발생안함
+});
+```
+
+<br>
 
 <br>
 
@@ -293,3 +402,144 @@ enum Role {
 - 모든 타입이 가능하도록 하는 것이기 때문에 의도한 타입이 아님에 따른 에러 발생이 되지 않아 vanilla JS와 다를 것이 없음 (TS 쓰는 이유 없어짐)
 
 - run-time check시에 사용한다. (즉 테스트용) 그 외에는 사용하지 않는 것이 좋다.
+
+```ts
+// 아래의 코드는 에러를 발생시키지 않는다.
+let inputValue: any;
+let inputString: string;
+
+inputValue = 5;
+inputString = inputValue;
+```
+
+any 타입의 변수 값을 string타입의 변수에 넣는데도 에러가 발생하지 않는다. 그 이유는 any 타입을 사용하는 것은 TS에게 모든 type checking을 하지 않게 만든다. 이는 TS에게 모든 것을 포기하게 만드는 것과 같다.
+
+<br>
+
+### 9. Union
+
+```ts
+function combine(input1: number, input2: number) {
+  const result = input1 + input2;
+  return result;
+}
+
+const combinedAges = combine(30, 26); // 정상 작동
+const combinedNames = combine("Max", "Anna"); //tsc 에러 발생
+
+//combine함수에서는 number, string 두 타입 모두의 + 연산을 한 결과를 return 하고 싶음
+// 그렇기 때문에 두 가지 타입의 명시가 필요함 => union 사용
+
+// Union으로 해결
+function combine(input1: number | string, input2: number | string) {
+  const result = input1 + input2;
+  return result;
+}
+
+const combinedAges = combine(30, 26); // 정상 작동
+const combinedNames = combine("Max", "Anna"); //정상 작동
+```
+
+위의 코드는 에러가 발생하지 않지만 IDE상에서 const result = input1 + input2 부분에 빨간 밑줄이 발생한다.<br><br>
+이를 마우스 hover하여 읽어보면 number | string 타입은 + 연산을 할 수 없다고 나온다. 이는 틀린 말이다.
+<br>
+<br>
+이런 현상이 발생하는 이유는 TS는 union 타입을 union 타입 그 자체로만 이해할 수 있고 그 내부에 어떤 타입들이 들어있는지는 알 수 없기 때문이다.<br><br>
+여러 타입이 들어갔을테니 + 연산자를 사용할 수 없는 타입이 있을지도 모른다는 뜻으로 이해하면 된다.
+<br><br>
+그런데 실제로 + 연산자를 사용할 수 없는 타입이 들어갈 수도 있는 등의 타입에 따른 문제가 발생할 수 있기 때문에 이를 처리하는 코드가 필요한 경우가 종종 있다.
+
+```ts
+// 위의 코드와 같은 내용이지만 파라미터들의 타입을 union으로 두 가지 타입을 주었기 때문에 각각의 타입인 경우의 처리 방법을 코드로 추가 작성한 것이다.
+
+function combine(input1: number | string, input2: number | string) {
+  let result;
+  if (typeof input1 === "number" && typeof input2 === "number") {
+    result = input1 + input2;
+  } else {
+    result = input1.toString() + input2.toString();
+  }
+  return result;
+}
+```
+
+<br>
+
+### 10. Literal
+
+- 변수나 매개변수가 아니고 숫자, 문자열도 아니다. 정확한 값을 가지는 타입이다.
+
+```ts
+// 마우스 hover하여 타입 보면 <const num: 2.8> 나옴
+// 원래는 2.8 자리에 타입이 들어가있어야 하는데 특정 값이 들어있는 것임
+// 2.8은 분명한 number타입인데 타입 대신 2.8이 들어가있는 이유는 "불변한 값" 이기 때문이다.
+
+const num = 2.8;
+```
+
+<br>
+
+### 11. Void
+
+- 함수에 return 연산자가 없을 때 함수의 return값의 타입은 void가 됨
+
+- 함수의 return 값의 타입을 void로 지정하였을 때, undefined가 return되면 에러가 발생한다. (void !== undefined)
+
+- 또한 함수의 return값의 타입을 undefined로 지정하고 return 연산자가 없다면 에러가 발생한다.
+
+- 그러나 return 값의 타입이 void (즉 return 없을 때)일 때 실제 return값을 출력해보면 undefined나옴
+
+<br>
+
+### 12. Undefined
+
+- TS에서는 undefined가 타입임
+
+- 타입이지만 값 자체도 undefined만을 가짐 (불변,고정)
+
+<br>
+
+### 13. Unknown
+
+- any와는 다르다.
+
+- 아직은 사용자가 마지막에 어떤 타입을 입력할 지 모르는 상태에서 사용한다.
+
+```ts
+// Case 1 : Any
+let userInput: any;
+let userName: string;
+userInput = 5;
+userName = userInput; // any는 type checking을 포기하도록 만들기 때문에 userInput의 타입이 string임이 보장되지 않았음에도 에러가 발생하지 않음
+
+// Case 2 : Unknown
+let userInput: unknown;
+let userName: string;
+userInput = 5;
+userInput = "MAX";
+userName = userInput; // 에러 발생
+
+//userInput의 값이 5여도 MAX여도 둘 다 에러 발생한다. 그 이유는 unknown 타입의 변수이기 때문에 이것이 string타입임이 보장되지 않기 때문이다.
+
+// 사용 예
+let userInput: unknown;
+let userName: string;
+userInput = 5;
+userInput = "MAX";
+if (typeof userInput === "string") {
+  userName = userInput; // 에러 발생하지 않음 (TS는 이 if문을 통해 이것이 문제를 일으키지 않을 것임을 추론함)
+}
+
+// unknown은 위와같이 일단 어떤 값이 들어갈 지 모르기 떄문에 unknown으로 타입을 지정해놓고 위의 if문과 같은 조건을 통과했을 때 사용가능하도록 할 수 있다. 이는 any와는 분명히 다르다고 할 수 있다.
+//(unknown은 타입 체크를 포기하도록 만들지 않기 때문)
+```
+
+<br>
+
+### 14. Never
+
+- 함수의 return 타입 지정에 사용한다.
+
+- 함수가 절대로 어떤 값도 return하지 않는다고 하고 싶을 때 사용한다. (make it clear that this function never returns anything)
+
+- code quality 관점에서 봤을 때, 어떠한 값도 return하지 않는다는 의도를 명확하게 보여줄 수 있기 때문에 좋다. (다른 사람이 읽을 때 의도파악 가능)
