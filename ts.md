@@ -223,6 +223,137 @@ addHandle(10, 20, (result) => {
 
 <br>
 
+## Class
+
+<br>
+
+### This
+
+```ts
+class Department {
+  name: string;
+
+  constructor(n: string) {
+    this.name = n;
+  }
+
+  describe() {
+    console.log("Department: " + this.name);
+  }
+}
+
+// object 생성
+const accounting = new Department("Accounting");
+
+accounting.describe(); // Department: Accounting
+
+const copy = { describe: accounting.describe };
+
+copy.describe(); // Department: undefined
+```
+
+메소드는 자신을 호출한 object가 this에 바인딩 되기 때문에 undefined가 발생한다.<br>
+하지만 tsc에서는 에러가 발생하지 않았다. 이러한 에러가 뜨게 하기 위해 이렇게 할 수 있다.
+
+```ts
+describe(this:Department) {
+  console.log("Department: " + this.name);
+} //copy.describe에서 컴파일 에러 발생한다.
+```
+
+<br>
+
+### Private
+
+```ts
+class Department {
+  name: string;
+  employee: string[] = [];
+
+  constructor(n: string) {
+    this.name = n;
+  }
+
+  describe(this: Department) {
+    console.log("Department: " + this.name);
+  }
+
+  addEmployee(employee) {
+    this.employee.push(employee);
+  }
+
+  printEmployeeInformation() {
+    console.log(this.employees);
+  }
+}
+
+// object 생성
+const accounting = new Department("Accounting");
+
+// employees에 추가
+accounting.addEmployee("MAX");
+
+// employees에 추가하는 또 다른 방법
+accounting.employees[1] = "MANU"; // 외부에서 메소드 없이 조작 가능
+```
+
+위와 같이 조작하게 되면 조작법이 통일되지 않음 그래서 외부 조작을 막고싶음
+
+```ts
+class Department {
+  name: string;
+  private employees: string[] = []; // private keyword 추가
+  ...
+}
+```
+
+private 키워드를 추가해주면 해당 변수는 외부에서 조작하려하면 컴파일 에러가 발생한다.<br>
+반대로 public키워드도 있지만 default이기 때문에 굳이 적지 않아도 된다.
+
+<br>
+
+### 약식초기화
+
+```ts
+class Department {
+  private name: string;
+  private id: number;
+
+  constructor(name: string, id: number) {
+    this.name = name;
+    this.id = id;
+  }
+}
+```
+
+위의 코드는 필드를 선언하고 constructor에서 초기화를 시켜주는 과정이다.<br>
+이는 약식 초기화로 코드를 짧게 만들 수 있다.
+
+```ts
+class Department {
+  constructor(private name: string, private id: number) {
+    // 여기에도 기존 코드 사용할 필요가 없어짐
+  }
+}
+```
+
+<br>
+
+### Readonly
+
+- 초기화 후에 값이 변경되지 않아야하는 필드에 readonly를 붙여준다.
+
+```ts
+class Department {
+  private readonly id: number;
+  ...
+}
+```
+
+<br>
+
+---
+
 <br>
 
 ## Type
@@ -543,3 +674,7 @@ if (typeof userInput === "string") {
 - 함수가 절대로 어떤 값도 return하지 않는다고 하고 싶을 때 사용한다. (make it clear that this function never returns anything)
 
 - code quality 관점에서 봤을 때, 어떠한 값도 return하지 않는다는 의도를 명확하게 보여줄 수 있기 때문에 좋다. (다른 사람이 읽을 때 의도파악 가능)
+
+<br>
+
+---
