@@ -352,9 +352,380 @@ class Department {
 
 <br>
 
----
+### Inheritance
+
+- 클래스는 다른 클래스를 상속할 수 있다.
+- 상속이라 함은 상속 해주는 클래스의 모든 내용을 상속 받은 클래스가 사용 가능하도록 하는 것이다.
+
+```ts
+// 상속해줄 클래스
+class Department {
+  protected name: string; // private사용하면 자식 클래스에서도 사용을 하지 못한다. 따라서 protected 사용한다.
+  protected id: number; // protected는 private와 같은 역할을 하지만 자식 클래스는 사용가능하게 해준다.
+
+  constructor(name: string, id: number) {
+    this.name = name;
+    this.id = id;
+  }
+
+  print() {
+    console.log(this.name, this.id);
+  }
+}
+
+const accounting = new Department("이종혁", 990);
+accounting.print(); // 이종혁 990
+
+// 상속 받을 클래스
+class ITDepartment extends Department {
+  private part: string; // 부모 클래스에서 part라는 프로퍼티를 하나 추가
+
+  constructor(name: string, id: number, part: string) {
+    super(name, id); // 부모 클래스의 프로퍼티를 그대로 사용, super에 arguments 넣어서 초기화
+    this.part = part; // 새로 추가된 프로퍼티는 초기화를 해줌
+  }
+
+  itPrint() {
+    console.log(this.name, this.id, this.part); // 만약 부모 class의 name, id가 private이라면 컴파일에러 발생
+  }
+}
+
+const newAccounting = new ITDepartment("이종", 9990, "프론트엔드");
+newAccounting.itPrint(); // 이종 9990 프론트엔드
+```
 
 <br>
+
+### Getter & Setter
+
+- Getter => 메소드 앞에 get붙여야 하며 반드시 무언가를 return해야 한다.
+
+```ts
+class Test {
+  private lastReport: string;
+  constructor(report: string) {
+    this.lastReport = report;
+  }
+  get mostRecentReport() {
+    if (this.lastReport) {
+      return this.lastReport;
+    }
+    throw new Error("No Report found");
+  }
+}
+
+const test = new Test("신고 들어왔습니다.");
+
+console.log(test.mostRecentReport); // 신고 들어왔습니다.
+```
+
+위의 코드에서 mostRecentReport Getter가 하는 일은 결국 lastReport필드가 존재할 때 이것을 return하고 없으면 error를 throw하는 것이다.
+
+일반적인 메소드 사용하는 것과는 달리 괄호를 붙이지 않아도 된다. return이 반드시 있어야하는 이유는 이것 때문이다 (test.mostRecentReport 자체가 getter의 return값 또는 throw new Error 이 되는 것)
+
+<br>
+
+- Setter는 arguments로 넘길 값이 필요하다.
+
+```ts
+class Test {
+  private lastReport: string;
+
+  constructor(report: string) {
+    this.lastReport = report;
+  }
+
+  addReport(report: string) {
+    this.lastReport = report;
+  }
+
+  get mostRecentReport() {
+    if (this.lastReport) {
+      return this.lastReport;
+    }
+    throw new Error("No Report found");
+  }
+
+  set mostRecentReport(value: string) {
+    if (!value) {
+      throw new Error("Value not found");
+    }
+    this.addReport(value);
+  }
+}
+
+const test = new Test("신고 들어왔습니다.");
+test.mostRecentReport = "새로운 신고입니다."; //메소드와 달리 괄호 필요없이 =으로 값 넘김 (setter)
+console.log(test.mostRecentReport); // 새로운 신고입니다 (getter)
+```
+
+<br>
+
+### Static property & methods
+
+- 예를들어 Math 클래스가 있다.
+- Math.PI 는 파이 값이 있고 Math.pow는 제곱을 계산해준다.
+
+```ts
+class Department {
+  static fiscalYear = 2020;
+
+  static createEmployee(name: string) {
+    return { name: name };
+  }
+}
+```
+
+위와같이 메소드나 프로퍼티의 앞에 static을 붙여주면 static으로 사용할 수 있다. 이것의 특징은 new 키워드를 사용해서 새로운 인스턴스를 생성하지 않아도 Department.fiscalYear, Department.createEmployee(name) 처럼 클래스에서 바로 사용할 수 있다.
+
+그리고 또 다른 특징은 이를 this로 사용할 수 없다는 것이다. 그렇기 때문에 만약 Department 클래스에서 fiscalYear 프로퍼티를 사용하고 싶다면 this가 아닌 Department.fiscalYear로 사용해야한다.
+
+Class를 grouping mechanism으로 사용할 수 있다. (마치 Math와 같이)
+
+<br>
+
+### Abstract
+
+```ts
+// 추상 클래스 만들기, 추상 클래스의 추상 메소드 앞에는 abstract를 붙여야 하며 이것을 사용하는 클래스의 앞에도 abstract를 붙여야 한다.
+abstract class Jong {
+  constructor(protected id: number) {}
+  abstract describe(): void;
+}
+
+// 추상 클래스를 상속받아 describe 메소드를 정의한다.
+class Lee extends Jong {
+  describe(): void {
+    console.log(this.id);
+  }
+}
+
+// 또 다른 클래스에서 describe메소드를 정의한다.
+class LeeJong extends Jong {
+  describe(): void {
+    console.log("hahahha", this.id);
+  }
+}
+
+// 각각 다르게 정의한 describe 메소드가 실행되는 모습
+const lee = new Lee(12);
+lee.describe();
+const leejong = new LeeJong(23);
+leejong.describe();
+```
+
+<br>
+
+### Singleton Pattern
+
+- 어떤 클래스에서 정확히 하나의 인스턴스만을 가지게 될 것임을 보장하는 것이다.
+
+- class의 constructor function 앞에 private를 붙인다.
+
+- private를 붙일 경우, new 연산자를 사용하여 새로운 인스턴스를 만드는 것에 에러가 발생한다.
+
+```ts
+class Accounting {
+  private id: number;
+  private name: string;
+  private static instance: Accounting;
+
+  private constructor(id: number, name: string) {
+    this.id = id;
+    this.name = name;
+  }
+
+  static getInstance() {
+    if (Accounting.instance) {
+      return this.instance;
+    }
+    this.instance = new Accounting(12, "이종혁");
+    return this.instance;
+  }
+}
+
+const account = Accounting.getInstance();
+console.log(account); // {id: 12, name: "이종혁"}
+```
+
+instance 자체를 필드로 두고, constructor앞에 private를 붙여서 new로 새로운 인스턴스 만들지 못하도록 하고, getInstance라는 static method를 사용해서 만약 이미 this.instance가 있다면 그것을 return하고 아니라면 자체적으로 new를 사용하여 인스턴스 하나를 생성 후에 그것을 return하여 사용하도록 한다.
+
+여기서 constructor앞에 private사용한 이유는 new 연산자를 통해 외부에서 새로운 인스턴스를 생성하지 못하게 하고, 내부에서는 인스턴스가 있는지 없는지를 체크하여 없다면 new로 새로 하나 만들고 있다면 있는 것을 return하도록 하여 <b>단 하나</b>의 인스턴스만을 가지도록 하는 것이다.
+
+<br>
+
+## Interface
+
+- Interface는 class와는 다르게 청사진으로 사용되지 않고 사용자 정의 타입으로 사용된다. (객체의 구조를 정의하기 위함)
+
+- 값을 넣으려하면 initializing에러가 발생한다. (초기값 지정 불가)
+
+- 메소드를 추가할 수 있다.
+
+```ts
+interface Person {
+  name: string;
+  age: number;
+
+  greet(phrase: string): void;
+}
+
+let user1: Person;
+
+user1 = {
+  name: "MAX",
+  age: 32,
+  greet(phrase: string) {
+    console.log(phrase + " " + this.name);
+  },
+};
+
+user1.greet("Hi there,"); // Hi there, MAX
+```
+
+- 왜 사용할까? interface 대신에 Person 앞에 type을 붙여도 똑같이 타입 구조를 정의할 수 있지 않을까? => 인터페이스는 객체의 구조를 설명하기 위해서만 사용되기 때문
+
+- 타입은 유니온 등의 여러가지의 구조를 정의할 때도 사용될 수 있지만 interface의 경우는 분명하게 객체의 구조를 정의할 때 사용되기 때문이다.
+
+- 클래스 선언에도 사용할 수 있다.
+
+```ts
+interface Greetable {
+  name: string;
+
+  greet(phrase: string): void;
+}
+
+interface AnotherInterface {
+  id: number;
+}
+
+// interface를 implement 함, implement는 inheritance와 다르게 여러개의 interface를 implement 가능
+class Person implements Greetable, AnotherInterface {
+  name: string;
+  id: number;
+
+  constructor(n: string, id: number) {
+    this.name = n;
+    this.id = id;
+  }
+
+  greet(phrase: string) {
+    console.log(phrase + " " + this.name + " 학번 " + this.id);
+  }
+}
+
+let user1: Greetable; // Person클래스가 이 인터페이스를 기반으로 생성되었기 때문에 이렇게 지정해도 에러 발생하지 않음
+user1 = new Person("이종혁", 2015112218);
+
+user1.greet("안녕~~~");
+```
+
+> implements를 사용해서 Person 클래스를 생성하였다. implement한 interface에서 정의된 타입과 구조대로 클래스가 만들어져야 하며 상속과는 다르게 여러개의 interface를 implement할 수 있다. (콤마) <br><br>
+> 이것의 의미는 여러 클래스를 미리 정의된 구조 (값이 아닌)대로 생성할 수 있다는 것이다. (모두 값은 다르지만 구조는 interface와 같게 필수적으로 가져야 할 프로퍼티나 메소드를 만들어야한다)
+
+- interface의 프로퍼티에는 private public 등을 사용할 수 없고 readonly만 사용할 수 있다. 이는 이 interface를 기반으로 생성되는 모든 객체의 속성이 한 번만 지정되어야 하며 그 이후에는 읽기 전용으로 설정되는 것이다. (한 번 초기화 후에는 변경 불가능)
+
+<br>
+
+### Interface Extend
+
+```ts
+interface Named {
+  readonly name: string;
+}
+
+interface Greetable extends Named {
+  greet(phrase: string): void;
+}
+
+class Person implements Greetable {
+  name: string;
+
+  constructor(name: string) {
+    this.name = name;
+  }
+
+  greet(phrase: string): void {
+    console.log(phrase, this.name);
+  }
+}
+
+let user1: Greetable;
+
+user1 = new Person("이종혁");
+
+user1.greet("ㅎㅇㅎㅇ");
+```
+
+인터페이스는 인터페이스를 extend할 수 있다. 위의 Person class에서는 greet 메소드를 생성하지 않으면 에러가 발생한다. Greetable interface는 Named interface를 extend했기 때문이다.
+
+사용 이유? => 어떤 클래스는 Named처럼 name 프로퍼티만이 필요할 수 있고 또 다른 어떤 클래스는 name프로퍼티와 greet 메소드 모두가 필요할 수도 있기 때문에 이렇게 나누어서 확장하는 방식을 사용한다.
+
+또, 콤마를 이용해서 여러개의 interface를 extend하는 것도 가능하다.
+
+<br>
+
+### Function Type Interface
+
+```ts
+// type AddFn = (a: number, b: number) => number;
+interface AddFn {
+  (a: number, b: number): number; // 익명함수
+}
+
+let add: AddFn;
+
+add = (n1: number, n2: number) => {
+  return n1 + n2;
+};
+
+console.log(add(2, 4)); //6
+```
+
+맨 위 주석과 같이 함수의 타입을 지정할 수 있지만 interface로도 가능하다.
+
+interface AddFn과 같이 익명함수의 괄호 안에 파라미터를 지정하고 마지막에는 콜론 입력 후에 반환값의 타입을 지정한다.
+
+그리고 나서 let add: AddFn과 같이 타입 지정을 해준 후에 이를 정의한다.
+
+<br>
+
+### 선택적 Property & Method
+
+```ts
+interface Named {
+  name?: string;
+  outputName?: string; // ? 붙이기
+
+  greet?(phrase: string): void; // ? 붙이기
+}
+
+class Person implements Named {
+  name?: string; // class에서도 ? 붙여서 선택적 프로퍼티로 만듬
+
+  constructor(name?: string) {
+    // 파라미터에도 선택적 가능
+    // 선택적 프로퍼티이기 떄문에 여기서 에러발생하지 않음, name이 선택적 아니었다면 어떠한 방법으로든 this.name을 초기화 할 수 있도록 해주어야함
+    if (name) {
+      this.name = name;
+    }
+  }
+}
+
+let user1: Named;
+
+user1 = new Person("이종");
+console.log(user1);
+```
+
+인터페이스에서이 프로퍼티나 메소드가 반드시 필요한 것인지 모를 때 프로퍼티나 메소드의 이름 뒤에 ? 를 붙이면 필수적이지 않게 사용할 수 있다. 위의 코드에서도 outputName과 greet를 만들지 않았지만 에러가 발생하지 않는다.
+
+<br>
+
+<br>
+
+---
 
 ## Type
 
