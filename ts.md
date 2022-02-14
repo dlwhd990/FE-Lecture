@@ -727,6 +727,340 @@ console.log(user1);
 
 ---
 
+## Advanced Typing Concepts
+
+<br>
+
+### Intersection Type
+
+- 서로 다른 타입을 결합할 수 있다.
+
+<br>
+
+```ts
+type Admin = {
+  name: String;
+  privileges: string[];
+};
+
+type Employee = {
+  name: String;
+  startDate: Date;
+};
+
+type ElevatedEmployee = Admin & Employee; // &을 사용 => intersection type
+
+const e1: ElevatedEmployee = {
+  name: "Max", // Admin & Employee
+  privileges: ["create-server"], //Admin
+  startDate: new Date(), // Employee
+};
+
+console.log(e1);
+```
+
+<br>
+
+### Type Guard
+
+- type guard는 유니언 타입을 돕는다.
+
+```ts
+type Combinable = string | number;
+type Numeric = number | boolean;
+type Universal = Combinable & Numeric; // number type => 두 타입에서 intersection type이 number이기 때문에
+```
+
+위의 코드는 intersection type덕분에 유연성을 갖지만 런타임 시에 정확히 어떤 타입을 얻게 될지 모를 수 있다.
+
+```ts
+type Combinable = string | number;
+type Numeric = number | boolean;
+type Universal = Combinable & Numeric;
+
+// a,b argument가 실제 runtime에서 string일지 number일지 모르기 때문에 에러 발생한다.
+// function add(a: Combinable, b: Combinable) {
+//   return a+b;
+// }
+
+//type guard 사용
+function add(a: Combinable, b: Combinable) {
+  if (typeof a === "string" || typeof b === "string") {
+    // 이 라인이 type guard이다.
+    return a.toString() + b.toString();
+  }
+  return a + b;
+}
+
+console.log(add(2, "3")); //23
+console.log(add(23, 32)); //55
+```
+
+<br>
+
+typeof로 type guard를 작성하지 못하는 경우도 있다. 아래 예시와 같다.
+
+```ts
+type Admin = {
+  name: String;
+  privileges: string[];
+};
+
+type Employee = {
+  name: String;
+  startDate: Date;
+};
+
+type ElevatedEmployee = Admin & Employee; // &을 사용 => intersection type
+
+const e1: ElevatedEmployee = {
+  name: "Max", // Admin & Employee
+  privileges: ["create-server"], //Admin
+  startDate: new Date(), // Employee
+};
+
+console.log(e1);
+
+type UnknownEmployee = Employee | Admin;
+
+function printEmployeeInformation(emp: UnknownEmployee) {
+  console.log("Name: " + emp.name);
+  console.log("Privileges: " + emp.previleges); //에러 발생 => UnknownEmployee가 Employee타입일 수도 있기 때문에
+}
+
+// 위의 경우에는 typeof로 type guard를 작성할 수 없음
+// 왜냐하면 emp의 type이 Admin인지 확인을 해야 가능한데 JS에서는 Admin이라는 타입을 알지 못하기 때문에 그렇게 작성할 수 없다.
+// (이 부분은 JS에도 컴파일 되는 일반적인 코드이기 때문)
+
+// 아래 코드와 같이 type guard 작성할 수 있다.
+function printEmployeeInformation(emp: UnknownEmployee) {
+  console.log("Name: " + emp.name);
+  if ("privileges" in emp) {
+    console.log("Privileges: " + emp.privileges);
+  }
+}
+
+printEmployeeInformation(e1); // Name: Max / privileges: create-server
+```
+
+<br>
+
+또 다른 방식의 type guard도 있다.
+
+```ts
+class Car {
+  drive() {
+    console.log("Driving...");
+  }
+}
+
+class Truck {
+  drive() {
+    console.log("Driving a truck...");
+  }
+
+  loadCargo(amount: number) {
+    console.log("Loading cargo ..." + amount);
+  }
+}
+
+type Vehicle = Car | Truck;
+
+const v1 = new Car();
+const v2 = new Truck();
+
+function useVehicle(vehicle: Vehicle) {
+  vehicle.drive();
+  if (vehicle instanceof Truck) {
+    // instanceof은 JS의 내장 연산자, JS는 Truck타입을 모르지만 생성자 함수는 알고 있기 때문에 이것이 가능
+    vehicle.loadCargo(1000); // Truck에만 있으므로 에러발생 (Car와 Truck중 어느것일지 모르기 때문)
+  }
+}
+
+useVehicle(v1);
+useVehicle(v2);
+```
+
+만약 여기서 class가 아닌 interface였다면 instanceof를 사용할 수 없다. interface는 JS에서 존재하지 않기 때문에 컴파일될 수 없기 때문이다.
+
+<br>
+
+### 구분된 Union
+
+```ts
+interface Bird {
+  type: "bird";
+  flyingSpeed: number;
+}
+
+interface Horse {
+  type: "horse";
+  runningSpeed: number;
+}
+
+type Animal = Bird | Horse;
+
+function moveAnimal(animal: Animal) {
+  let speed;
+  switch (animal.type) {
+    case "bird":
+      speed = animal.flyingSpeed;
+      break;
+    case "horse":
+      speed = animal.runningSpeed;
+  }
+  console.log("Moving with speed: " + speed);
+}
+
+moveAnimal({ type: "horse", runningSpeed: 200 });
+```
+
+위의 코드에서 animal의 타입에 따라 flyingSpeed 메소드가 있을 지, runningSpeed 메소드가 있을 지 달라지기 때문에 이를 구분하는 방법이 필요하다.
+
+interface이기 때문에 instanceof도 사용할 수 없다 (JS에는 interface가 없기 때문에 이것에 대해 컴파일할 수 없다)
+
+그렇기 때문에 interface들에 type이라는 프로퍼티를 만들어서 이것을 통해 switch로 구분할 수 있도록 하였다. (공통된 프로퍼티 명으로 구분, 모든 객체가 해당 프로퍼티 명을 통해 검사를 할 수 있게 한다)
+
+<br>
+
+### 형 변환
+
+```ts
+// const userInputElement = document.getElementById("user-input")!; // 느낌표 붙여주어 null이 아니라는 것을 알림
+
+// const userInputElement = <HTMLInputElement>document.getElementById("user-input")!
+
+const userInputElement = document.getElementById(
+  "user-input"
+)! as HTMLInputElement;
+
+userInputElement.value = "Hi there!";
+```
+
+TS는 HTML파일을 읽을 수 없다. 따라서 getElementById의 결과가 DOM element일지 null일지도 모른다. 그렇기 때문에 에러가 발생한다.
+
+일반적인 JS방식으로 코드를 작성하면 userInputElement를 사용했을 때 에러가 발생한다. 왜냐하면 이것이 null일지도 모르기 때문이다. 이 때 맨 뒤에 !를 붙여주어 확실히 null이 아니라는 것을 알려준다.
+
+그래도 에러가 발생한다. 왜냐하면 value라는 프로퍼티는 모든 HTML Element가 갖고있는 프로퍼티가 아니기 때문이다.
+
+이를 해결하기 위해 해당 엘리먼트가 value프로퍼티를 갖는 DOM 요소임을 알려주어야 한다. 이 방법은 두 가지가 있다.
+
+document앞에 <HTMLInputElement>를 붙이거나 !의 뒤에 as HTMLInputElement를 붙여주는 것이다.
+
+DOM 엘리먼트 외에도 as string등을 붙여주면 형변환을 할 수 있다.
+
+<br>
+
+### Index Property
+
+- 인터페이스에서 정확한 속성 이름, 속성의 개수를 모를 때, 정하지 않았을 때 사용
+
+```ts
+//이 인터페이스를 기반으로 만들어진 class의 모든 속성은 문자열 타입의 속성 이름과 문자열 타입의 속성 값을 가져야 한다는 것을 의미한다.
+interface ErrorContainer {
+  [prop: string]: string;
+}
+```
+
+<br>
+
+그 중에서도 필수적으로 있어야 할 프로퍼티들은 따로 지정할 수 있다. 다만 prop에서 지정한 타입과 같아야한다.
+
+```ts
+interface ErrorContainer {
+  id: string; // 키, 값 모두 string이기 때문에 가능
+  [prop: string]: string;
+}
+```
+
+<br>
+
+### Function Overload
+
+- 동일한 함수에 대해 여러 함수 시그니처를 정의할 수 있다.
+
+```ts
+type Combinable = string | number;
+type Numeric = number | boolean;
+type Universal = Combinable & Numeric;
+
+function add(a: number, b: number): number; //overload
+function add(a: string, b: string): string; //overload
+function add(a: Combinable, b: Combinable) {
+  if (typeof a === "string" || typeof b === "string") {
+    return a.toString() + b.toString();
+  }
+  return a + b;
+}
+
+const result = add("max", " schwarz");
+console.log(result); // max schwarz
+console.log(result.split(" ")); // ["max", "schwarz"]
+```
+
+result.split(" "); 원래대로면 에러가 발생한다.<br>
+왜냐하면 TS는 result의 타입을 union으로 알고 있기 때문에 이것의 타입이 string일지 number일지 알 지 못한다.
+
+실제로는 result의 파라미터로 둘 모두 string타입을 주었기 때문에 개발자 입장에서는 result의 타입이 string인 것을 알 수 있지만 TS는 그러지 못한다.
+
+그렇기 때문에 TS입장에서는 result가 number타입일지도 모르기 때문에 string 타입의 내장 메소드인 split을 사용하지 못하게 하는 것이다.
+
+이 경우에 위의 코드처럼 함수 오버로드를 사용한다.
+
+function add의 윗 부분처럼 파라미터의 타입에 따라 어떤 타입이 리턴 될지만 정의를 새롭게 해주는 것이다.
+
+만약 a,b가 모두 number타입이면 number타입을 return한다고 알려주고 반대로 모두 string 타입이면 string타입을 return한다고 알려주는 것이다. 이를 사용해서 string타입의 메소드인 split을 컴파일 에러 없이 사용할 수 있다.
+
+<br>
+
+### Optional Chaining
+
+```ts
+// 백엔드 서버에서 데이터를 가져왔을 경우를 가정한다. 아래의 데이터는 DB에서 가져온 데이터라고 보자
+const fetchedUserData = {
+  id: "u1",
+  name: "Max",
+  job: { title: "CEO", description: "My own company" },
+};
+
+console.log(fetchedUserData.job.title);
+
+// 여기서 일부 데이터가 누락되어있는 경우가 있을 수 있다. (프로퍼티 유무)
+// 예를 들어 fetchedUserData에서 job 프로퍼티가 없는 경우 console.log부분에서 에러 발생한다.
+// 이는 프론트에서 제어하는 데이터가 아니기 때문에 문제가 발생한다.
+
+// JS방식의 해결법
+console.log(fetchedUserData.job && fetchedUserData.job.title);
+
+// TS에서는 optional chaining operator를 사용하여 더 나은 방법으로 구현이 가능하다. (3.7버전 이상)
+console.log(fetchedUserData?.job?.title); // 불확실한 요소 뒤에 ? 붙여준다
+```
+
+위의 코드는 job 프로퍼티에 주석처리를 하면 컴파일 에러가 발생한다. 그 이유는 TS가 이미 fetchedUserData에 job프로퍼티가 없다는 것을 알기 때문이다. 그러나 현재 DB에서 데이터를 받아오는 것을 가정하여 해당 데이터가 불확실하다는 것을 전제로 코드를 작성한 것이기 때문에 이 부분은 무시해도 된다.
+
+<br>
+
+### Nullish
+
+- null 데이터 처리에 도움을 준다.
+
+- 어떠한 데이터나 입력값이 있는데 이것이 null인지 undefined인지 유효한 데이터인지 알 수 없을 경우
+
+```ts
+// 데이터가 user input이나 DB내의 데이터처럼 null인지 아닌지 알 수 없을 경우를 전제로함 (userInput의 값)
+const userInput = null;
+
+// 이와 같이 코드작성하면 falsy한 값들에 대해 DEFAULT를 storedData에 저장하겠지만
+// 만약 빈 문자열 또는 0을 storedData에 넣고 싶다면? 빈 문자열과 0은 falsy하기 때문에 DEFAULT가 저장되게 됨. 이를 막기위해 nullish 사용한다.
+const storedData = userInput || "DEFAULT";
+
+const storedData = userInput ?? "DEFAULT"; // ?? 사용하면 null이나 undefined만 false로 판단한다.
+```
+
+<br>
+
+---
+
 ## Type
 
 <br>
