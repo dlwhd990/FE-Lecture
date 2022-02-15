@@ -840,3 +840,66 @@ const addVAT2 = addTaxRate(0.23);
 console.log(addVAT2(100));
 console.log(addVAT2(23));
 ```
+
+<br>
+
+## IIFE (즉시 실행 함수)
+
+- 단 한번만 실행되는 함수
+
+```js
+// IIFE
+(function () {
+  console.log("HIHI");
+})();
+
+// IIFE ARROW
+(() => console.log("ARROW TOO"))();
+
+//WHY? => scope
+//scope가 생성되었기 때문에 이 안에서 선언된 변수는 외부에서 접근 불가능 => private한 변수 생성 (encapsulate, data privacy)
+(function () {
+  const isPrivate = 23;
+})();
+
+console.log(isPrivate); //ERROR
+
+//하지만 modern JS에서는 사용하지 않는다
+//과거에는 var을 사용했기 때문에 function scope여야 encapsulate할 수 있었기 때문에 이와같이 사용을 했다.
+//하지만 block scope인 let, const가 나왔기 때문에 즉시실행 함수가 아닌 단순한 코드블럭만으로도 encapsulate을 할 수 있다.
+
+{
+  const isPrivate = 23;
+  let isPrivateToo = 12;
+}
+
+console.log(isPrivate); //ERROR
+console.log(isPrivateToo); //ERROR
+```
+
+<br>
+
+## Closure
+
+```js
+const secureBooking = function () {
+  let passengerCount = 0;
+
+  return function () {
+    passengerCount++;
+    console.log(`${passengerCount} passengers`);
+  };
+};
+
+const booker = secureBooking();
+
+booker(); //1 passengers
+booker(); //2 passengers
+booker(); //3 passengers
+```
+
+위의 코드에서 const booker = secureBooking();이 실행되면 call stack에 secureBooking 함수의 execution context가 들어가게 되고 return된 함수가 booker 변수에 저장되며 이 execution context는 call stack에서 pop된다.
+
+그러나 booker 함수를 3번 실행해본 결과 이는 passengerCount변수를 계속해서 기억하며 1씩 증가시키고 있다.
+
+이미 secureBooking 함수는 call stack에서 빠져나갔지만 booker 함수는 secureBooking의 내부 환경을 기억하고 있는 것이다. 이것이 closure이다.

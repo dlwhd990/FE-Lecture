@@ -554,6 +554,8 @@ instance 자체를 필드로 두고, constructor앞에 private를 붙여서 new�
 
 <br>
 
+---
+
 ## Interface
 
 - Interface는 class와는 다르게 청사진으로 사용되지 않고 사용자 정의 타입으로 사용된다. (객체의 구조를 정의하기 위함)
@@ -1056,6 +1058,28 @@ const storedData = userInput || "DEFAULT";
 
 const storedData = userInput ?? "DEFAULT"; // ?? 사용하면 null이나 undefined만 false로 판단한다.
 ```
+
+<br>
+
+---
+
+## Generics
+
+<br>
+
+### What is Generic
+
+- TS에 내장된 타입이며, 타입이 다른 타입과 연결된 것이다.
+
+- 예를 들어, array는 하나의 타입이지만 그 안에 담기는 데이터들의 타입 또한 존재한다.
+
+```ts
+const names: Array<string> = []; // string[]와 같다
+```
+
+위의 코드처럼 Array안의 데이터들의 타입을 string으로 지정한 것이 generic 타입이다.
+
+이것을 통해 names array의 값들은 모두 string타입임을 알 수 있으며 그렇기 때문에 names의 어떤 원소들도 string의 method를 사용할 수 있다.
 
 <br>
 
