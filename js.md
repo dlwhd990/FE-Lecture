@@ -903,3 +903,140 @@ booker(); //3 passengers
 그러나 booker 함수를 3번 실행해본 결과 이는 passengerCount변수를 계속해서 기억하며 1씩 증가시키고 있다.
 
 이미 secureBooking 함수는 call stack에서 빠져나갔지만 booker 함수는 secureBooking의 내부 환경을 기억하고 있는 것이다. 이것이 closure이다.
+
+모든 function은 항상 자신이 만들어진 execution context의 variable environment에 접근할 수 있다.
+
+variable을 찾을 때 scope chain보다도 closure을 먼저 탐색한다. (priority가 scope chain보다 높다.)
+
+<br>
+
+```js
+let f;
+
+const g = function () {
+  const a = 23;
+  f = function () {
+    console.log(a * 2);
+  };
+};
+
+const h = function () {
+  const b = 777;
+  f = function () {
+    console.log(b * 2);
+  };
+};
+
+g();
+f(); //46
+
+// Re-assigning f function
+h();
+f(); //1554
+console.dir(f);
+```
+
+위의 코드에서 a라는 변수는 g function에서 선언된 변수이다. 그리고 f()의 시점에선 이미 g의 함수 실행이 종료되고 execution context가 call stack의 밖으로 나간 상태이다. 하지만 f()의 결과로 a변수에 2를 곱한 값인 46이 정상적으로 출력된다.
+
+그리고 같은 방법으로 h function에서 f를 reassign해주고 f를 다시 실행해보면 이번엔 closure로 b변수를 access하고있다.
+
+<br>
+
+<img src="./img/closure.png">
+f변수를 console.dir로 출력해보고 [[Scopes]] (괄호의 의미는 코드에서 접근할 수 없는 영역이라는 의미)의 0번을 보면 Closure (h) {b: 777} 부분을 볼 수 있다.
+
+<br>
+
+이는 h라는 함수의 closure로 b라는 변수를 접근할 수 있다는 것을 알 수 있고 0번에 있기 때문에 scope chain보다 priority가 높다는 것도 알 수 있다.
+
+<br>
+
+```js
+const boardPassengers = function (n, wait) {
+  const perGroup = n / 3;
+
+  setTimeout(function () {
+    console.log(`We are now boarding all ${n} passengers`);
+    console.log(`There are 3 groups, each with ${perGroup} passengers`);
+  }, wait * 1000);
+
+  console.log(`Will start boarding in ${wait} seconds`);
+};
+
+boardPassengers(180, 3);
+```
+
+setTimeout의 예제) setTimeout의 콜백함수는 boardPassengers와 별개로 동작한다.
+
+setTimeout의 콜백함수는 call back queue (taskqueue)에 들어가서 시간이 되면, 그리고 call stack이 비어있으면 call stack으로 불러와서 실행하기 때문에 반드시 boardPassengers 함수 실행이 종료된 후에 실행이 되게 된다.
+
+그런데 이 콜백함수에서 boardPassengers 함수의 argument (즉 함수의 로컬변수와 같은)인 n 변수와 boardPassengers에서 선언된 perGroup변수를 사용하고 있다. 이것도 클로저이다.
+
+<br>
+
+#### Coding Challenge (Closure)
+
+```js
+(function () {
+  const header = document.querySelector("h1");
+  document.addEventListener("click", function () {
+    header.style.color = "blue";
+  });
+})();
+```
+
+Explain to myself
+
+> header변수는 즉시실행함수의 execution context의 variable environment에서 생성되었다.<br>그리고 addEventListener의 콜백함수는 click이벤트가 document에서 발생했을 때 callback queue로 들어가서 call stack이 비어있을 때 call stack으로 이동되어 함수가 실행되게 된다.<br><br>
+> 이는 이미 IIFE의 실행이 끝난 이후이지만 콜백함수는 자기 자신이 만들어진 execution context의 variable environment, 즉 여기서는 IIFE의 variable environment에 항상 access할 수 있기 때문에 이것이 가능하다.(closure)
+
+<br>
+
+---
+
+## Asynchronous JS
+
+<br>
+
+### Synchronous vs Asynchronous
+
+<br>
+
+#### 1. Synchronous
+
+- 대부분의 코드는 synchronous이다.
+- synchronous 코드는 line-by-line으로 실행된다.
+- 각각의 코드 라인은 이전 라인이 끝나기를 기다렸다가 실행된다. (block)
+- Long-running operation은 코드 실행을 오랫동안 block한다. (alert가 좋은 예이다. alert의 확인버튼을 누르기 전 까지는 이후의 코드가 실행되지 않게 block되는 것을 볼 수 있다.)
+
+<br>
+
+#### 2. Asynchronous
+
+- Async 코드는 background실행이 끝난 후에 실행된다. (대기?)
+- non-blocking이다. (앞의 코드실행이 끝나기를 기다리지 않는다.)
+- not occuring at the same time
+- call back function 자체가 자동적으로 async코드가 되는 것은 아니다.
+- timer 또는 loading의 경우에 사용된다.
+
+<br>
+
+```js
+const img = document.querySelector(".dog");
+img.src = "dog.jpg";
+img.addEventListener("load", function () {
+  img.classList.add("fadeIn");
+});
+
+p.style.width = "300px";
+```
+
+두번째 줄은 async하게 실행된다. 왜냐하면 이미지를 로드해야 하고 이 때문에 뒤의 코드에 block이 발생하면 성능에 문제가 생기기 때문이다.
+
+그리고 addEventListener자체는 코드를 async하게 만들지 않는다. 이는 background에서 이벤트 발생을 '기다리고' 있는 것이지 무언가를 '하고' 있지 않기 때문이다. (async라는 것이 background에서 task가 실행되어 이것이 끝나면 실제로 실행이 되는 것이므로)
+
+<br>
+
+### AJAX
+
+- web server와의 통신을 async방식으로 하는것을 가능하게 해준다.(dynamic)
