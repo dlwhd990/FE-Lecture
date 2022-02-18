@@ -1040,3 +1040,49 @@ p.style.width = "300px";
 ### AJAX
 
 - web server와의 통신을 async방식으로 하는것을 가능하게 해준다.(dynamic)
+
+- 과거 = XMLHttpRequest, 현재 = fetch
+
+<br>
+
+### Promise
+
+- 미래의 값이 담겨있는 container
+
+- 이를 복권에 비유하면, 복권의 번호를 정하고 구매하는 것은 promise를 생성하는 것과 같고 복권의 당첨 발표는 async하게 background에서 promise의 결과를 받아오기 까지의 과정과 같고 발표 이후에는 만약 번호가 적중했다면 돈을 얻게되는 (미래의 값)것과 같다.
+
+<img src="./img/promise1.png">
+
+<br>
+
+#### Promise Lifecycle
+
+1. pending
+
+- 미래의 값이 아직 사용 불가능한 상황이다.
+
+<br>
+
+2. settled
+
+- async task가 끝난 상태이다. 이 상태에서는 두 가지로 나뉜다.
+- FULFILLED : 성공적으로 값을 받아와서 사용 가능한 상태이다.
+- REJECTED : 에러가 발생한 상태이다.
+
+<img src="./img/promise2.png">
+
+<br>
+
+#### Then
+
+- promise의 method이다.
+
+- fulfilled 상태인 promise를 다루기 위해서 사용된다.
+
+```js
+const getCountryData = function (contry) {
+  fetch(`https://restcountries/rest/v2/name/${country}`) //
+  .then((response) => response.json()); // 여기서 response는 위의 fetch로부터 생성되어 fulfilled상태가 된 promise이다.
+  .then(result => console.log(result)); // 위의 then에서 return된 response.json()의 결과인 promise가 result가 된다.
+};
+```
