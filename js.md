@@ -1086,3 +1086,128 @@ const getCountryData = function (contry) {
   .then(result => console.log(result)); // 위의 then에서 return된 response.json()의 결과인 promise가 result가 된다.
 };
 ```
+
+<br>
+
+#### Building A Simple Promise
+
+- Promise constructor은 단 하나만의 argument를 갖는다. 이 argument는 executor function이다.
+
+- executor function은 async한 동작이 포함되어있는 함수가 들어간다. (async한 동작을 위해서 promise를 사용하는 것이므로)
+
+- executor function은 두가지 argument를 갖는다. resolve와 reject method이다. resolve는 promise의 settled상태 중 fulfilled(= success)상태로 만들어주고, reject는 rejected상태로 만들어준다
+
+- resolve method의 argument는 promise의 fulfilled value이다. (then method에 의해 consume될 수 있도록)
+
+```js
+new Promise(function (resolve, reject) {
+  if (Math.random() >= 0.5) {
+    resolve("당첨"); //then
+  } else {
+    reject("낙첨"); //catch
+  }
+})
+  .then((res) => console.log(res))
+  .catch((err) => console.error(err));
+```
+
+만약 Math.random()의 결과가 0.5 이상이라면 resolve 메소드가 실행되어 '당첨'이라는 fulfilled value가 return되어 then으로 넘어간다. <br>반대로 0.5 미만이라면 reject 메소드가 실행되어 '낙첨'이라는 rejected value가 catch로 넘어간다.
+
+<br>
+
+<br>
+
+### Asynchronous Behind The Scenes (Event Loop)
+
+<br>
+
+<img src="./img/loopcode.png">
+
+위의 코드가 동작하는 과정을 Event Loop에서 확인해보며 async한 동작이 어떻게 이루어질 수 있는지 알아본다
+
+<br>
+
+1. 첫 번째 줄의 코드가 실행된다. (synchronous)
+
+2. 두 번째 줄의 코드가 실행된다. 이미지를 로드하는 것은 오래걸리기 때문에 synchronous하게 동작한다면 call stack에서 뒤의 코드의 실행을 막게 되기 때문에 block이 일어나게 된다.<br>
+   그렇기 때문에 이미지를 로드하는 것은 DOM요소와 관련된 async한 동작이다. 따라서 이는 JS Runtime의 WEB APIs에서 동작한다.
+
+3. 세 번째 줄의 addEventListener 부분이 실행된다. 이벤트 리스너의 콜백 함수는 이미지가 로딩되는 곳 (WEB APIs environment)에 등록된다. 이는 load 이벤트가 발생할 때 까지 이곳에 머문다.
+
+<img src="./img/loop2.png">
+
+<br>
+
+<br>
+
+4. fetch부분이 실행된다. 여기서 then 부분은 fetch로부터 return될 promise(future value)를 받아서 실행되어야 할 부분이기 때문에 이것도 addEventListener부분과 같이 WEB APIs environment에 then부분의 콜백함수가 등록된다.
+
+<img src="./img/loop3.png">
+
+<br>
+
+<br>
+
+5. 등록해두었던 eventListner의 load이벤트가 발생했다면 이에 대한 콜백 함수가 callback queue로 이동한다.<br>(callback queue는 실행될 준비가 완료된 모든 콜백함수들이 순서대로 들어있는 queue이다.)
+
+<br>
+
+6. event loop에서는 call stack이 비어있는지를 확인하고, 비어있다면 callback queue의 가장 앞의 callback 함수를 call stack으로 옮긴다.<br>여기서는 addEvnetListener의 콜백함수가 call stack으로 이동하게 된다. 이 과정을 event loop tick이라고 한다.<br> 여기서 알 수 있는 사실은 JS engine (call stack + heap) 자체는 시간에 관련해서는 알지 못한다는 것이다. 그저 call stack으로 이동된 함수를 실행하는 것이다. async한 모든 것을 관리하는 것은 runtime이다.
+
+<br>
+
+7. fetch가 완료되어 fulfilled 상태가 되었다면 then의 콜백함수가 microtasks queue로 이동된다. (promise이기 때문에)<br>microtasks queue는 callback queue보다 우선순위가 높다. 그렇기 때문에 만약 microtasks queue의 콜백함수의 실행 결과로 또 다시 microtasks queue에 콜백함수가 생겼다면 callback queue에 콜백함수들이 존재하여도 그 콜백함수를 먼저 call stack으로 이동시킨다. 그렇기 때문에 microtasks queue는 callback queue에 starvation을 일으킬 수 있다.<br> 그리고 call stack이 비어있다면, callback queue와는 다르게 microtasks queue의 모든 콜백함수를 call stack으로 이동시킨다.
+
+<br>
+
+```js
+console.log("test start"); // 1
+
+setTimeout(() => console.log("0 sec timer"), 0); //4
+
+Promise.resolve("Resolved Promise 1").then((res) => console.log(res)); // 3
+
+console.log("test end"); // 2
+```
+
+위의 코드의 실행 순서는 다음과 같다.
+
+1. 첫 번째 줄의 console.log가 실행된다.
+
+2. 두 번째 줄의 코드가 실행되어 WEB APIs environment에 setTimeout의 콜백함수가 등록되고, 0밀리초 뒤에 callback queue로 이동된다.
+
+3. 세 번째줄의 promise가 바로 resolve되었고 이에 따라 then의 콜백함수가 microtasks queue로 이동된다.
+
+4. 네 번째 줄의 console.log가 실행된다.
+
+5. call stack이 비었으므로 event loop가 microtasks queue를 먼저 확인한다. microtasks queue에 콜백함수가 있으므로 이곳에 있는 모든 콜백함수를 call stack으로 이동시킨다.
+
+6. call stack으로 이동된 콜백함수를 실행한다.
+
+7. 실행이 완료되면 다시 call stack이 비게되고 event loop는 다시 microtasks queue를 확인한다. 하지만 비어있기 때문에 callback queue를 확인한다.
+
+8. callback queue에 콜백함수가 있기 때문에 이 중 가장 앞의 콜백함수를 call stack으로 이동시킨다.
+
+9. 이동된 콜백함수를 call stack에서 실행한다. (이것의 실행이 끝나면 코드 실행 종료)
+
+<br>
+
+```js
+console.log("test start");
+
+setTimeout(() => console.log("0 sec timer"), 0);
+
+Promise.resolve("Resolved Promise 1").then((res) => console.log(res));
+
+Promise.resolve("Resolved Promise 2").then((res) => {
+  for (let i = 0; i < 5000000000; i++) {}
+  console.log(res);
+});
+
+console.log("test end");
+```
+
+위에서 설명한 코드에서 promise 2 부분을 새로 추가한 코드이다.
+여기서 for loop는 50억번을 loop하기 때문에 꽤 오랜 시간이 걸린다. 그래서 이 동안 call stack에서는 block이 발생한다.<br>그 결과로 'Resolved Promise 2' 와 '0 sec timer' 부분이 늦게 출력되는 것을 볼 수 있다.<br>이것을 한 이유는 setTimeout의 delay time은 보장되지 않는다는 것을 알기 위함이다.<br> delay time은 0ms였지만 실제로는 약 5초정도의 시간 뒤에 setTimeout의 콜백함수가 실행되었다. 이것은 callback queue에서 자신보다 앞에 있는 callback함수가 모두 실행되는 것, 그리고 microtasks queue의 모든 callback함수가 실행되는 것을 기다려야 하기 때문이다.<br> <br>그렇기 때문에 만약 delay time이 3000인 경우에, setTimeout의 콜백함수는 코드가 실행되고 나서 3초보다 빨리 실행되는 일이 일어나지 않는다는 것은 보장되지만 정확히 3초뒤에 실행된다는 보장은 없다는 것이다.
+
+<br>
