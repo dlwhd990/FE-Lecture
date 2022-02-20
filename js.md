@@ -1089,6 +1089,53 @@ const getCountryData = function (contry) {
 
 <br>
 
+#### Promise chain
+
+```js
+const getPosition = function () {
+  return new Promise(function (resolve, reject) {
+    navigator.geolocation.getCurrentPosition(resolve, reject);
+  });
+};
+
+const whereAmI = function () {
+  getPosition() //
+    .then((pos) => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+
+      return fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
+    })
+    .then((res) => {
+      console.log(res);
+      if (!res.ok) throw new Error(`Problem with geocoding ${res.status}`);
+      return res.json();
+    })
+    .then((data) => {
+      console.log(data);
+      console.log(`You are in ${data.city}, ${data.country}`);
+      return fetch(`https://restcountries.com/rest/v2/name/${data.country}`);
+    })
+    .then((res) => {
+      if (!res.ok) throw new Error(`Country not found ${res.status}`);
+      console.log(res);
+    })
+    .catch((err) => console.error(err));
+};
+```
+
+기존의 callback 지옥을 벗어날 수 있는 방법이다.
+이것은 promise에서 새로운 promise를 생성해서 사용해야할 때 사용할 수 있다.
+
+위의 코드에서는 우선 가장 먼저 getPosition함수를 실행하여 이것에서 promise가 return되면 그 밑의 then이 실행된다.
+
+그 다음에는 해당 promise의 fulfilled value인 lat,lng값을 사용해서 fetch라는 새로운 promise를 실행한다.
+
+그리고는 이것이 fulfilled 상태가 된다면 이것을 return하여 또 다시 밑의 then의 콜백함수를 실행한다.
+
+이런식으로 promise안에서 새로운 promise를 build하여 이 promise의 fulfilled value를 then에서 받아서 사용이 가능하기 때문에 callback지옥보다 훨씬 좋은 코드를 작성할 수 있다.
+
+<br>
+
 #### Building A Simple Promise
 
 - Promise constructor은 단 하나만의 argument를 갖는다. 이 argument는 executor function이다.
@@ -1112,6 +1159,25 @@ new Promise(function (resolve, reject) {
 ```
 
 만약 Math.random()의 결과가 0.5 이상이라면 resolve 메소드가 실행되어 '당첨'이라는 fulfilled value가 return되어 then으로 넘어간다. <br>반대로 0.5 미만이라면 reject 메소드가 실행되어 '낙첨'이라는 rejected value가 catch로 넘어간다.
+
+<br>
+
+```js
+const wait = function (seconds) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, seconds * 1000);
+  });
+};
+
+wait(2)
+  .then(() => {
+    console.log("2초 기다림");
+    wait(1);
+  })
+  .then(() => console.log("1초 기다림"));
+```
+
+프로미스를 return하는 함수를 만들어서 아래와 같이 사용가능하다.
 
 <br>
 
@@ -1211,3 +1277,189 @@ console.log("test end");
 여기서 for loop는 50억번을 loop하기 때문에 꽤 오랜 시간이 걸린다. 그래서 이 동안 call stack에서는 block이 발생한다.<br>그 결과로 'Resolved Promise 2' 와 '0 sec timer' 부분이 늦게 출력되는 것을 볼 수 있다.<br>이것을 한 이유는 setTimeout의 delay time은 보장되지 않는다는 것을 알기 위함이다.<br> delay time은 0ms였지만 실제로는 약 5초정도의 시간 뒤에 setTimeout의 콜백함수가 실행되었다. 이것은 callback queue에서 자신보다 앞에 있는 callback함수가 모두 실행되는 것, 그리고 microtasks queue의 모든 callback함수가 실행되는 것을 기다려야 하기 때문이다.<br> <br>그렇기 때문에 만약 delay time이 3000인 경우에, setTimeout의 콜백함수는 코드가 실행되고 나서 3초보다 빨리 실행되는 일이 일어나지 않는다는 것은 보장되지만 정확히 3초뒤에 실행된다는 보장은 없다는 것이다.
 
 <br>
+
+### Async/Await
+
+- ES8 (2017)에 새롭게 추가된 기능이다.
+
+- promise를 기존의 then방식과 다르게 사용할 수 있는 문법적 설탕 역할을 한다.
+
+- promise의 fulfilled value가 사용가능해질 때 까지 기다린 후에 다음 코드를 실행하고 싶다면 해당 함수를 async로 선언하고 기다리고 싶은 코드에 await를 붙여준다.
+
+```js
+const getPosition = function () {
+  return new Promise(function (resolve, reject) {
+    navigator.geolocation.getCurrentPosition(resolve, reject);
+  });
+};
+
+const whereAmI = async function () {
+  const pos = await getPosition();
+  const { latitude: lat, longitude: lng } = pos.coords;
+
+  const resGeo = await fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
+  const dataGeo = await resGeo.json();
+
+  const res = await fetch(
+    `https://restcountries.com/v2/name/${dataGeo.country}`
+  );
+
+  const data = await res.json();
+  renderCountry(data[0]);
+};
+```
+
+whereAmI 함수는 async하게 동작하는 부분이 들어가기 때문에 async를 함수 선언 앞에 붙여준다.
+
+pos변수에는 getPosition함수에서 return한 promise의 fulfilled value 값을 할당하고 싶다. 그렇기 때문에 해당 함수 실행 부분의 앞에 await를 붙였다.
+
+그 뒤로도 fetch나 fetch된 결과를 json메소드로 json화 시키는 과정에서도 async한 동작이 필요하기 때문에 await를 붙여서 이를 원하는대로 비동기 동작이 가능하도록 하였다.
+
+<br>
+
+### Try, Catch, Finally
+
+- try는 실행하고 싶은 코드가 작성되는 부분이다.
+
+- catch는 만약 try로부터 에러가 발생했다면 해당 에러를 컨트롤할 수 있는 부분이다. 해당 에러는 catch에 파라미터로 넘겨지게 된다.
+
+- finally는 에러발생 여부와는 상관 없이 반드시 마지막에 실행되는 코드가 작성되는 부분이다.
+
+<br>
+
+### Returning Values From Async Functions
+
+async function을 사용해서 then, catch를 사용한 경우, catch가 아닌 then부분이 실행된다.
+
+```js
+// 윗 부분 생략
+const whereAmI = async function () {
+  try {
+    const pos = await getPosition();
+    const { latitude: lat, longitude: lng } = pos.coords;
+
+    const resGeo = await fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
+
+    if (!resGeo.ok) throw new Error("ㅋㅋ");
+    const dataGeo = await resGeo.json();
+
+    const res = await fetch(
+      `https://restcountries.com/v2/name/${dataGeo.countryddd}` // 일부러 에러 발생
+    );
+
+    if (!res.ok) throw new Error("ㅎㅎ");
+
+    const data = await res.json();
+
+    if (data.status === 404) throw new Error("problem getting country");
+
+    renderCountry(data[0]);
+  } catch (err) {
+    alert(err.message); // 정상적으로 실행됨
+  }
+};
+
+whereAmI()
+  .then((city) => console.log(city)) // 실행됨
+  .catch((err) => console.error(err)); // 실행 안됨
+```
+
+코드 가장 아래 부분에서 whereAmI 함수는 에러를 발생했음에도 불구하고 fulfilled가 되어 then부분이 실행되고 catch부분은 실행되지 않았다.
+
+이것을 해결하기 위해서 async함수의 catch부분에도 throw error하는 부분이 있어야 한다.
+
+<br>
+
+```js
+// pre ES8
+whereAmI()
+  .then((city) => console.log(city))
+  .catch((err) => console.error(err))
+  .finally(() => console.log("finished!!"));
+
+// ES8+
+(async function () {
+  try {
+    const city = await whereAmI();
+    if (!city) throw new Error("Error");
+    console.log(city);
+  } catch (err) {
+    console.error(err);
+  }
+  console.log("finished!");
+})();
+```
+
+상단의 과거형 문법인 then catch 대신에 최신 문법인 async/await를 사용하여 변형한 모습이다.
+
+async한 함수를 사용하는데 이것 또한 async하게 작동되어야 한다면 IIFE로 필요한 부분을 하나의 함수로 묶고 IIFE를 async로 선언하여 사용할 수 있다.
+
+<br>
+
+### Promise in Parallel
+
+<br>
+
+Promise.all method를 사용한다.
+
+```js
+const getJSON = function (url, errorMsg = "something went wrong") {
+  return fetch(url).then((response) => {
+    if (!response.ok) throw new Error(`${errorMsg} (${response.status})`);
+    return response.json();
+  });
+};
+
+// 수정 전
+const get3Countries = async function (c1, c2, c3) {
+  try {
+    const [data1] = await getJSON(`https://restcountries.com/v2/name/${c1}`);
+    const [data2] = await getJSON(`https://restcountries.com/v2/name/${c2}`);
+    const [data3] = await getJSON(`https://restcountries.com/v2/name/${c3}`);
+
+    console.log([data1.capital, data2.capital, data3.capital]);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+// 정상작동하지만 parallel하게 동작하지 않음. data2는 data1을 기다렸다가 fetch하고 data3은 data2와 data1을 기다린다.
+// 여기서 많은 시간이 지체될 수 있다. 이들을 평행하게 실행시킨다면 훨씬 빠른 실행이 가능하다.
+get3Countries("portugal", "canada", "tanzania");
+
+//
+//
+
+// 수정 후 (promise.all() 사용)
+const get3Countries = async function (c1, c2, c3) {
+  try {
+    const data = await Promise.all([
+      getJSON(`https://restcountries.com/v2/name/${c1}`),
+      getJSON(`https://restcountries.com/v2/name/${c2}`),
+      getJSON(`https://restcountries.com/v2/name/${c3}`),
+    ]);
+    console.log(data.map((d) => d[0].capital));
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+// network 탭을 열어서 cascade를 확인해보면 fetch 요청을 거의 동시에 보내는 것을 확인할 수 있다.
+get3Countries("portugal", "canada", "tanzania");
+```
+
+<br>
+
+### Promise Combinators
+
+1. Promise.race
+
+- promise들로 이루어진 array를 받아서 promise를 return 한다.
+
+- race의 뜻처럼 promise들끼리 경주를 해서 가장 먼저 settled 상태가 되는 promise를 return한다. settled 상태인지를 따지는 것이기 때문에 fulfilled인지 rejected인지는 상관하지 않는다.
+
+- 위의 이유때문에 단 하나만의 원소를 가지는 array의 body를 가진다.
+
+<br>
+
+2.
