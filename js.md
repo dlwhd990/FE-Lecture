@@ -1462,4 +1462,168 @@ get3Countries("portugal", "canada", "tanzania");
 
 <br>
 
-2.
+2. Promise.allSettled
+
+- ES2020에 새로 추가됨
+
+- Promise.all은 하나의 promise에서 reject나오면 error발생하지만 이것은 settled 상태이면 된다(fulfilled, rejected 중 아무거나)
+
+<br>
+
+3. Promise.any
+
+- ES2021에 새로 추가됨
+
+- 가장 빨리 fulfilled가 된 promise를 return함 (race와 비슷)
+
+- Promise.race와의 차이점은 race는 rejected된 promise도 return하지만 any는 rejected된 promise는 무시함 (rejected된 promise가 가장 먼저 settled가 되었어도 무시하고 가장 먼저 fulfilled가 된 promise를 return 한다)
+
+```js
+Promise.any([
+  Promise.reject("fff"),
+  Promise.resolve("Success"),
+  Promise.reject("zzz"),
+  Promise.resolve("aa"),
+]).then((res) => console.log(res)); // Success (fff는 무시)
+```
+
+<br>
+
+<br>
+
+---
+
+## OOP (Object Oriented Programming)
+
+- object concept를 기반으로 한 programming paradigm이다. (Style of the code)
+
+- object는 현실세계의 사물을 model화 시킬 때 사용한다.
+
+- object는 data (properties)와 code (method)를 포함할 수 있다. data와 그에 관련된 behavior을 한 블럭 안에 pack해놓은 것이다.
+
+- object들은 다른 object들과 interact할 수 있는데, 이 interaction의 방법을 API (a public intarface)라고 한다.
+
+- OOP는 더욱 flexible하고 maintain하기 쉬운 코드를 작성하기 위한 목표를 위해 개발되었다.
+
+<br>
+
+## Class
+
+- 새로운 object를 만들기 위한 청사진이라고 할 수 있다. 즉, 추상적인 설계도와 같다.
+
+- class로부터 만들어진 object를 instance라고 한다.
+
+- class를 만드는 데에는 중요한 4가지 기본 원칙이 있다.
+
+<br>
+
+### 4가지 원칙
+
+1. Abstaction
+
+- implementation과는 상관없는 (불필요한) detail들을 무시한다.
+
+- 예를 들어, 스마트폰의 사용자 측면에서의 기능들을 정의할 때 충전 볼트량 조절 등과 같은 디테일한 기능은 필요하지 않을 것이다. 이런 것을 제외시키라는 것이다.
+
+<br>
+
+2. Encapsulation
+
+- properties와 methods를 클래스 안에서 private하게 유지하는 것이다. (class 밖에서 access하지 못하도록)
+
+- 외부에서 내부의 state를 바로 조작할 수 있다면 버그를 일으킬 수 있기 때문에 중요하다.
+
+<br>
+
+3. Inheritance
+
+- 어떤 한 class가 다른 한 class에 완전히 속할 때 (집합 관계와 같은?) 이는 상속을 사용하여 코드의 중복을 줄일 수 있다.
+
+- child class와 parent class가 있다. (완전히 속하는 쪽이 parent, parent에 살을 더 붙인 쪽이 child)
+
+<br>
+
+4. Polymorphism (다형성) (many shapes)
+
+- child class는 parent class로부터 상속 받은 method를 overwrite(수정)할 수 있다.
+
+<br>
+
+<br>
+
+## Prototype
+
+- JS에서의 OOP는 Prototype을 사용한다.
+
+- Object들은 prototype object와 link되어있다.
+
+- prototype object는 methods와 properties를 가지고 있고, 이 prototype object와 연결되어있는 object들은 모두 이것을 사용할 수 있다. (prototypal inheritance)
+
+- object의 behavior은 자신과 연결된 prototype object에게 대리로 맡겨진다. (delegate)<br>
+  behavior(methods) is copied from class to all instances
+
+```js
+const num = [1, 2, 3];
+num.map((v) => v * 2);
+```
+
+위와 같은 코드들에서 우리는 이미 prototype을 사용하였다. num array에서 map이라는 method를 어떻게 사용할 수 있었던 것일까? 그것은 prototype 덕분이다. (Array.prototype.map)
+
+num array는 위의 코드에서 literal하게 선언되었지만 사실 Array 생성자 함수로 부터 생성된 것과 같다. 따라서 이 num array는 Array의 methods를 prototype object로 접근/사용할 수 있기 때문에 사용 가능했던 것이다. (prototypal inheritance)
+
+<br>
+
+### Prototype을 만드는 방법
+
+1. Constructor functions
+
+- Array와 같은 built-in objects들이 실제로 실행되는 방법이다.
+
+<br>
+
+2. ES6 Classes
+
+- modern 방식이다. (syntatic sugar, 실제로는 constructor functions와 같이 동작한다. classical OOP와는 다르게 동작한다.)
+
+<br>
+
+3. Object.create()
+
+- object를 prototype object와 연결시키기에 가장 쉬운 방법이다.
+
+- 잘 쓰이지 않는다고 한다.
+
+<br>
+
+<br>
+
+### Constructor functions
+
+<br>
+
+```js
+"use strict";
+
+const Person = function (firstName, birthYear) {
+  this.firstName = firstName;
+  this.birthYear = birthYear;
+
+  this.print = function () {
+    console.log(this.firstName);
+  };
+};
+
+const a = new Person("JONG", 1996);
+
+a.print();
+```
+
+constructor function의 instance 생성 과정
+
+1. 새로운 object가 생성됨
+
+2. function이 호출되고, this는 object에 binding됨
+
+3. object가 prototype에 link됨
+
+4. function은 자동적으로 object를 return함
