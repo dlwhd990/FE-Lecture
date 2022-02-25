@@ -1555,7 +1555,7 @@ Promise.any([
 
 - JS에서의 OOP는 Prototype을 사용한다.
 
-- Object들은 prototype object와 link되어있다.
+- JS의 모든 Object들은 prototype object와 link되어있다.
 
 - prototype object는 methods와 properties를 가지고 있고, 이 prototype object와 연결되어있는 object들은 모두 이것을 사용할 수 있다. (prototypal inheritance)
 
@@ -1570,6 +1570,63 @@ num.map((v) => v * 2);
 위와 같은 코드들에서 우리는 이미 prototype을 사용하였다. num array에서 map이라는 method를 어떻게 사용할 수 있었던 것일까? 그것은 prototype 덕분이다. (Array.prototype.map)
 
 num array는 위의 코드에서 literal하게 선언되었지만 사실 Array 생성자 함수로 부터 생성된 것과 같다. 따라서 이 num array는 Array의 methods를 prototype object로 접근/사용할 수 있기 때문에 사용 가능했던 것이다. (prototypal inheritance)
+
+<br>
+
+<br>
+
+JS의 모든 함수들은 자동적으로 prototype라는 property를 갖고있다.
+(Constructor function도)
+
+어떤 constructor function에 의해 만들어진 모든 object들은 constructor function의 prototype property에서 정의한 모든 property와 method에 접근이 가능하다.
+
+```js
+"use strict";
+
+const Person = function (firstName, birthYear) {
+  this.firstName = firstName;
+  this.birthYear = birthYear;
+};
+
+console.log(Person.prototype);
+
+//Person이라는 constructor function의 prototype에 method를 추가한다.
+Person.prototype.calcAge = function () {
+  console.log(2022 - this.birthYear);
+};
+
+const me = new Person("JONG", 1996);
+
+// Person에 의해 만들어졌기 때문에
+// Person의 prototype에 있는 method에 접근 가능하다.
+me.calcAge(); // 26
+
+// birthYear과 firstName만 있을 뿐 calcAge method는 존재하지 않는다.
+// prototype 에서 가져다 쓴 것이다.
+console.log(me);
+
+// method뿐 만 아니라 property도 가능하다.
+Person.prototype.species = "Homo Sapiens";
+
+console.log(me.species);
+```
+
+위와 같이 constructor function 자체에 method를 두지 않고 prototype object에 두는 것이 좋다. 왜냐하면 constructor function에 두게 되면 이것을 통해 object들을 만들 때 마다 해당 method가 따로 만들어지는 것이기 때문에 효율적이지 않다.<br>
+prototype에 하나의 method를 만들고 모든 object가 이것과 link되었다면 중복 없이 reuse할 수 있는 것이다.
+
+<br>
+
+```js
+console.log(Person.prototype);
+console.log(me.__proto__);
+console.log(Person.prototype === me.__proto__); // true
+console.log(Person.prototype.isPrototypeOf(me)); // true
+console.log(Person.prototype.isPrototypeOf(Person)); // false
+```
+
+me의 prototype object는 Person의 prototype property이다.
+
+엄밀히 따지면 Person.prototype은 Person의 prototype이 아니다. (코드 마지막 줄 참고)<br>Person으로부터 만들어진 모든 object들의 prototype이다. 그래서 그 object들에서 사용될 수 있는 것이다.
 
 <br>
 
@@ -1618,12 +1675,235 @@ const a = new Person("JONG", 1996);
 a.print();
 ```
 
-constructor function의 instance 생성 과정
+위와 같이 constructor function에 this사용하여 method 작성하는 것은 피하는 것이 좋다. 왜냐하면 이 constructor function을 사용해서 수많은 object들을 만들게 된다면 그 수많은 instance들이 모두 이 method를 들고 있을 것이고 이는 성능상 좋지 않기 때문이다.
 
-1. 새로운 object가 생성됨
+그 대신에 prototype과 prototype inheritance를 사용하는 것이 효율적이다.
 
-2. function이 호출되고, this는 object에 binding됨
+<br>
 
-3. object가 prototype에 link됨
+<br>
 
-4. function은 자동적으로 object를 return함
+### new 연산자를 통한 constructor function & Class의 instance 생성 과정
+
+1. 새로운 empty object가 생성됨
+
+2. function이 호출되고, this는 object에 binding됨 (빈 object에서 property, method 세팅 됨)
+
+3. object가 constructor function의 prototype property에 link됨 (이것은 objectName.\_\_proto\_\_로 접근 가능)
+
+4. function은 자동적으로 object를 return함 (constructor function에 return이 없음에도 불구하고)
+
+<br>
+
+<br>
+
+### Prototype Chain
+
+<br>
+
+<img src="./img/protochain.png">
+위의 사진과 같은 상황에서 왼쪽 네모 박스의 코드인 jonas.calcAge()를 호출하게 되면 JS에서는 calcAge를 찾을 수 없다. jonas object에 calcAge 메소드가 없기 때문이다. <br>이럴 때 JS는 이 object의 prototype을 보게 된다. prototype에는 calcAge가 존재하기 때문에 에러 없이 실행할 수 있다. (prototypal inheritance / delegation)
+
+<br>
+
+이는 prototype chain덕분에 가능한 것이다. jonas object와 이것의 prototype은 기본적으로 prototype chain을 형성한다.
+
+<br>
+
+<img src="./img/protochain2.png">
+Prototype chain에 대한 그림이다.
+
+<br>
+
+Person.prototype.\_\_proto\_\_가 Object.prototype인 이유는 우리가 Person이라는 constructor function을 literal하게 선언했을 때 이는 자동적으로 Object의 constructor function에 의해 만들어지는 것이기 때문에 Person.prototype은 Object의 prototype을 가리킨다.
+
+<br>
+
+Object.prototype.\_\_proto\_\_는 prototype chain의 마지막이기 때문에 null이 된다.
+
+```js
+//(윗 내용은 위의 Person constructor function예제와 같음)
+
+// true (constructor은 prototype의 역방향이기 때문에 자기자신이 됨)
+console.log(Person.prototype.constructor === Person);
+
+// true
+console.log(Person.prototype.__proto__ === Object.prototype);
+
+// true
+console.log(Person.prototype.__proto__ === me.__proto__.__proto__);
+
+// true
+console.log(me.__proto__.__proto__ === Object.prototype);
+
+// null (prototype chain의 끝)
+console.log(Object.prototype.__proto__);
+```
+
+<br>
+
+jonas.hasOwnProperty("name") 을 실행하면 에러가 발생하지 않고 정상 동작한다. 이것이 prototype chain을 통해 실행되는 과정은 다음과 같다.
+
+1. jonas object에서 hasOwnProperty라는 method를 찾아본다. 존재하지 않기 때문에 prototype으로 올라가서 찾는다.
+
+2. jonas.\_\_proto\_\_에서 hasOwnProperty method를 찾아보지만 여기에도 없다. 그렇기 때문에 jonas.\_\_proto\_\_.\_\_proto\_\_ 즉 constructor function의 prototype의 \_\_proto\_\_를 살펴본다. (Object.\_\_proto\_\_)
+
+3. Object.\_\_proto\_\_에서 해당 method를 발견했기 때문에 이를 사용한다. (이 method는 Object의 method이다)
+
+<br>
+
+#### Prototype of built-in Objects
+
+<br>
+
+```js
+// new Array() === [] (literal)
+const arr = [2, 3, 2, 3, 2, 3, 2, 3, 41, 4, 1251, 232, 3, 12, 3];
+
+console.log(Array.prototype === arr.__proto__); // true
+
+// 내 맘대로 새로운 method만들어서 Array.prototype에 넣음
+// 하지만 이렇게 하는 것은 좋지 않으니
+// 참고만 하고 built-in object의 prototype을 건들지 말자.
+Array.prototype.myCustomMethod = function () {
+  return [...new Set(this)];
+};
+
+console.log(arr.myCustomMethod()); // 사용 가능
+
+const h1 = document.querySelector("h1");
+
+console.dir(h1.__proto__); // HTMLHeadingElement Object
+
+console.dir(h1.__proto__.__proto__); // HTMLElement Object
+
+console.dir(h1.__proto__.__proto__.__proto__); //Element Object
+
+console.dir(h1.__proto__.__proto__.__proto__.__proto__); // Node Object
+
+console.dir(h1.__proto__.__proto__.__proto__.__proto__.__proto__); // Event Target Object
+
+console.dir(h1.__proto__.__proto__.__proto__.__proto__.__proto__.__proto__); // Object
+
+console.dir(
+  h1.__proto__.__proto__.__proto__.__proto__.__proto__.__proto__.__proto__
+); // null;
+
+console.dir((x) => x + 1); // === Function.prototype
+```
+
+<br>
+
+<br>
+
+## Class
+
+<br>
+
+### Class 문법
+
+```js
+// class expression
+const Person = class {
+  // ...
+};
+
+//class declaration
+class Person {
+  // ...
+}
+```
+
+<br>
+
+### Constructor
+
+```js
+class PersonCl {
+  constructor(firstName, birthYear) {
+    this.firstName = firstName;
+    this.birthYear = birthYear;
+  }
+
+  calcAge() {
+    console.log(2022 - this.birthYear);
+  }
+}
+```
+
+위의 class의 constructor 내부는 class로부터 instance 생성할 때 초기 값 지정하는 곳이다.
+<br>
+
+그리고 calcAge method는 instance가 아닌 instance object의 prototype에 들어가게 된다. (constructor 외부에 있으므로, prototypal inheritance)
+
+<br>
+
+### Class의 특징
+
+1. hoisting이 발생하지 않는다. (expression, declaration 모두)<br> 여기서 constructor function과의 차이가 있다는 것을 알 수 있다. constructor function은 function declaration이기 때문에 hoisting 발생한다.)
+
+2. first-class citizen이다. function에 argument로 넣을 수도 있고 함수로부터 return될 수도 있다.
+
+3. 따로 지정하지 않았어도, class 내부의 코드는 strict mode로 동작한다.
+
+4. constructor function과 class 중 어떤 것을 사용할 지는 개인의 취향 문제이다.
+
+<br>
+
+### Getter & Setter
+
+<br>
+
+getter와 setter는 property처럼 사용된다.
+
+```js
+const account = {
+  owner: "jonas",
+  movements: [200, 530, 120, 300],
+
+  // getter에는 반드시 return이 있어야 함
+  get latest() {
+    return this.movements.slice(-1).pop();
+  },
+
+  // setter에는 반드시 하나의 parameter가 존재해야 함
+  set latest(mov) {
+    this.movements.push(mov);
+  },
+};
+
+// getter는 ()없이 property처럼 사용된다. account.latest 자체가 getter에서 return된 값이다.
+console.log(account.latest);
+
+// setter도 ()없이 = 를 사용해서 파라미터를 전달한다.
+account.latest = 8888;
+
+console.log(account); // [200,530,120,300,8888]
+```
+
+<br>
+
+getter와 setter은 data validation에서 매우 유용하다.
+
+```js
+class Person {
+  constructor(fullName, birthYear) {
+    this.fullName = fullName;
+    this.birthYear = birthYear;
+  }
+
+  set fullName(name) {
+    if (name.includes(" ")) this.fullname = name;
+    else alert(`${name} is not a full name!`);
+  }
+}
+
+const test = new Person("homer simpson", 1993); // OK
+const test2 = new Person("JONG", 1996); // alert
+```
+
+만약 fullname만을 받아야 하고 그렇지 않은 경우 alert를 발생시키고 싶다면 위와같이 파라미터 명과 setter의 이름을 동일하게 설정한다. <br>
+
+그렇게 하면 constructor 내부에서 this.fullName = fullName 부분이 실행될 때 setter가 실행되고 name 파라미터는 instance 생성 시 전달 받은 fullName argument가 들어가게 된다.
+
+그렇게 해서 만약 fullName이 아니라면 alert실행, 맞다면 그대로 저장되는 방식으로 data validation이 가능하다.
