@@ -1893,8 +1893,12 @@ class Person {
   }
 
   set fullName(name) {
-    if (name.includes(" ")) this.fullname = name;
+    if (name.includes(" ")) this._fullname = name;
     else alert(`${name} is not a full name!`);
+  }
+
+  get fullName() {
+    return this._fullName;
   }
 }
 
@@ -1902,8 +1906,155 @@ const test = new Person("homer simpson", 1993); // OK
 const test2 = new Person("JONG", 1996); // alert
 ```
 
-만약 fullname만을 받아야 하고 그렇지 않은 경우 alert를 발생시키고 싶다면 위와같이 파라미터 명과 setter의 이름을 동일하게 설정한다. <br>
+만약 fullname만을 받아야 하고 그렇지 않은 경우 alert를 발생시키고 싶다면 위와 같이 코드를 작성할 수 있다. <br>
 
 그렇게 하면 constructor 내부에서 this.fullName = fullName 부분이 실행될 때 setter가 실행되고 name 파라미터는 instance 생성 시 전달 받은 fullName argument가 들어가게 된다.
 
-그렇게 해서 만약 fullName이 아니라면 alert실행, 맞다면 그대로 저장되는 방식으로 data validation이 가능하다.
+그렇게 해서 만약 풀네임이 아니라면 alert실행, 맞다면 this.\_fullName이라는 새로운 프로퍼티에 저장되는 방식으로 data validation이 가능하다.
+
+<br>
+
+### Static Methods
+
+```js
+// [h1]
+console.log(Array.from(document.querySelectorAll("h1")));
+
+// error
+console.log([1, 2, 3].from(Array.from(document.querySelectorAll("h1"))));
+```
+
+위의 코드는 static method를 잘 보여주는 예시이다.
+<br>
+
+Array constructor function은 from method를 사용 가능하지만 [1,2,3]과같이 literal로 Array constructor function을 통해 만들어진 object에서는 사용 불가능한 것을 볼 수 있다.
+<br>
+
+이것은 from method가 static method 이기 때문이다.
+
+```js
+// Array constructor function 열어보기
+console.dir(Array);
+```
+
+위와 같이 Array constructor function을 보면 from, isArray, of 라는 method들이 있는 것을 볼 수 있다.
+
+이들은 다른 method들 처럼 constructor의 prototype에 있지 않고 Array constructor 그 자체에 있다. 그렇기 때문에 이들은 Array자체에서는 사용 가능하지만 이로부터 만들어진 array들은 사용 불가능하다. (in Array name space)
+
+<br>
+
+```js
+const Person = function (firstName, birthYear) {
+  this.firstName = firstName;
+  this.birthYear = birthYear;
+};
+
+Person.hey = function () {
+  console.log("Hey there");
+};
+
+const test = new Person("jong", 1996);
+
+Person.hey();
+
+test.hey(); // Error
+```
+
+constructor function에서는 위와 같이 static method를 생성 가능하다.
+
+위의 예시에서 보이듯이 Person.hey는 Person 자체에서만 사용 가능하며 Person constructor function으로부터 만들어진 test object에서는 hey method를 사용하면 에러가 발생한다.
+
+<br>
+
+Class에서는 다음과 같이 static method를 생성한다.
+
+```js
+class Person {
+  constructor(fullName, birthYear) {
+    this.fullName = fullName;
+    this.birthYear = birthYear;
+  }
+
+  static hey() {
+    console.log("Hey there");
+    console.log(this);
+  }
+}
+
+Person.hey();
+
+const test = new Person("HEHE", 1999);
+
+test.hey(); // Error
+```
+
+앞에 static 키워드를 붙여주는 이유는 class에서는 method가 기본적으로 prototype에 들어가기 때문에 이를 막기 위해서이다.
+
+그리고 static method의 this는 자기 자신을 호출한 것에 binding되기 때문에 이는 Person이 된다.
+
+<br>
+
+<br>
+
+## Object.create
+
+<br>
+
+prototypal inheritance를 implement하는 방법 중 하나이다.
+
+<br>
+
+```js
+const PersonProto = {
+  calcAge() {
+    console.log(2022 - this.birthYear);
+  },
+};
+
+// steven이라는 새로운 object만들고 PersonProto를 prototype으로 link한다.
+const steven = Object.create(PersonProto);
+
+console.log(steven); // empty, prototype linked to PersonProto
+
+steven.name = "Steven";
+steven.birthYear = 2002;
+steven.calcAge(); // 20
+
+console.log(steven.__proto__ === PersonProto); // true
+```
+
+<br>
+
+<br>
+
+## Inheritance Between Classes
+
+<br>
+
+inheritance를 사용하는 이유
+
+1. code 중복 (don't repeat your self)
+
+2. parent 위치에 존재하던 class의 property가 변경되어도 child 위치의 class에는 반영되지 않는 문제 발생
+
+3. parent class의 prototype을 child class에서 사용 가능하도록 하기 위해서
+
+<br>
+
+constructor function에서 inheritance 사용 예시
+
+```js
+const Person = function (firstName, birthYear) {
+  this.firstName = firstName;
+  this.birthYear = birthYear;
+};
+
+// INHERITANCE (call method로 this 명시)
+// this = Student
+const Student = function (firstName, birthYear, course) {
+  Person.call(this, firstName, birthYear);
+  this.course = course;
+};
+```
+
+<br>
