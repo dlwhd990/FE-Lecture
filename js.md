@@ -2041,7 +2041,7 @@ inheritance를 사용하는 이유
 
 <br>
 
-constructor function에서 inheritance 사용 예시
+### constructor function에서 inheritance 사용 예시
 
 ```js
 const Person = function (firstName, birthYear) {
@@ -2055,6 +2055,206 @@ const Student = function (firstName, birthYear, course) {
   Person.call(this, firstName, birthYear);
   this.course = course;
 };
+
+// Person의 prototype을 Student에 link시키기 위해 Object.create 사용
+// instance.__proto__.__proto__ === Person.prototype
+Student.prototype = Object.create(Person.prototype);
+
+const mike = new Student("Mike", 2020, "CS");
+mike.introduce(); // 정상작동
+mike.calcAge(); // 정상작동
+
+// Object.create()를 사용해서 Student의 prototype property를 설정했기 때문에 이런 결과가 나옴
+console.dir(Student.prototype.constructor); // Person
+console.log(mike instanceof Student); // true
+console.log(mike instanceof Person); // true
 ```
 
 <br>
+
+### Class (ES6) inheritance 사용 예시
+
+<br>
+
+```js
+class PersonCl {
+  constructor(firstName, birthYear) {
+    this.firstName = firstName;
+    this.birthYear = birthYear;
+  }
+
+  calcAge() {
+    console.log(2022 - this.birthYear);
+  }
+}
+
+class Student extends PersonCl {
+  constructor(fullName, birthYear, course) {
+    super(fullName, birthYear); // super always needs to happen first
+    this.course = course;
+  }
+
+  introduce() {
+    console.log(this.firstName);
+  }
+}
+
+const martha = new Student("Martha Jones", 2012, "CS");
+martha.calcAge(); // 10
+martha.introduce(); // Martha Jones
+console.log(martha);
+```
+
+<br>
+
+parent class의 method를 override 하는 법
+
+```js
+class Student extends PersonCl {
+  constructor(fullName, birthYear, course) {
+    super(fullName, birthYear); // super always needs to happen first
+    this.course = course;
+  }
+
+  introduce() {
+    console.log(this.firstName);
+  }
+
+  // 같은 이름의 메소드 재선언
+  calcAge() {
+    console.log(
+      `My course is ${this.course} and I'm ${2022 - this.birthYear} years old`
+    );
+  }
+}
+```
+
+위의 inheritance 예제에서 주석 부분만 추가한 것이다. 이렇게 원래의 메소드와 같은 이름의 메소드를 다시 정의 해주면 overriding이 된다.
+
+<br>
+
+### Object.create()의 inheritance 사용 예시
+
+<br>
+
+```js
+const PersonProto = {
+  calcAge() {
+    console.log(2022 - this.birthYear);
+  },
+
+  init(firstName, birthYear) {
+    this.firstName = firstName;
+    this.birthYear = birthYear;
+  },
+};
+
+const StudentProto = Object.create(PersonProto);
+
+const jay = Object.create(StudentProto);
+```
+
+위의 코드를 그림으로 나타내면
+
+<img src="./img/protochain3.png">
+다음과 같다.
+
+먼저 StudentProto object는 PersonProto object를 prototype으로 link했다.
+
+그 뒤에는 StudentProto obejct는 jay object의 prototype이 되었다. 이렇게 prototype chain을 구성하였다. (inheritance)
+
+<br>
+
+아래 코드는 StudentProto에서 PersonProto의 init mehtod를 override한 것이다.
+
+```js
+const PersonProto = {
+  calcAge() {
+    console.log(2022 - this.birthYear);
+  },
+
+  init(firstName, birthYear) {
+    this.firstName = firstName;
+    this.birthYear = birthYear;
+  },
+};
+
+const steven = Object.create(PersonProto);
+
+const StudentProto = Object.create(PersonProto);
+
+// super처럼 사용한다.
+StudentProto.init = function (firstName, birthYear, course) {
+  // this는 method를 호출한 object가 될 수 있도록 call method로 this binding
+  PersonProto.init.call(this, firstName, birthYear);
+  this.course = course;
+};
+
+StudentProto.introduce = function () {
+  console.log(`My name is ${this.firstName} and I study ${this.course}`);
+};
+
+const jay = Object.create(StudentProto);
+
+jay.init("Jay", 2010, "Computer Science");
+jay.introduce(); //My name is Jay and I study Computer Science
+```
+
+<br>
+
+## Class팁
+
+```js
+class Account {
+  constructor(owner, currency, pin) {
+    this.owner = owner;
+    this.currency = currency;
+    this.pin = pin;
+    this.movements = [];
+    this.locale = navigator.language;
+  }
+}
+
+const acc1 = new Account("Jonas", "EUR", 1111);
+
+// 프로퍼티를 직접 건드는 것은 좋지 않다.
+// 이것을 관리하는 메소드 만들어서 그것으로 조작하도록 만든다.
+acc1.movements.push(250);
+acc1.movements.push(-140);
+console.log(acc1);
+```
+
+위와 같이 프로퍼티를 직접 건드려서 변경하는 것은 좋지 않다. (버그 발생 가능성이 높아진다.)
+
+따라서 이것을 컨트롤 하는 메소드를 만들어서 그 메소드를 통해서만 조작하도록 한다.
+
+수정하면 다음과 같다
+
+```js
+class Account {
+  constructor(owner, currency, pin) {
+    this.owner = owner;
+    this.currency = currency;
+    this.pin = pin;
+    this.movements = [];
+    this.locale = navigator.language;
+  }
+
+  // Public Interface (API)
+  deposit(val) {
+    this.movements.push(val);
+  }
+
+  withdraw(val) {
+    this.deposit(-val);
+  }
+}
+
+const acc1 = new Account("Jonas", "EUR", 1111);
+acc1.deposit(250);
+acc1.withdraw(140);
+
+console.log(acc1);
+```
+
+deposit, withdraw는 public interface (API)라고도 할 수 있다.
