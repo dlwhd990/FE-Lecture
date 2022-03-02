@@ -2258,3 +2258,128 @@ console.log(acc1);
 ```
 
 deposit, withdraw는 public interface (API)라고도 할 수 있다.
+
+<br>
+
+<br>
+
+## Encapsulation
+
+첫 번째 방법은, 개발자들끼리 이 property나 method가 internal하게 (public하지 않게) 사용되어야한다는 것을 알리기 위해서는 이름 앞에 \_를 붙인다. (convention일 뿐이며 실제로 그런 기능을 하지는 않는다.)
+
+<br>
+
+다음으로는 위에서 작성했던 Account class 를 가지고 실제 public, private 기능을 하는 방법을 알아본다.
+
+<br>
+
+```js
+class Account {
+  // Public fields (instances)
+  locale = navigator.language;
+
+  constructor(...) {
+    ...
+  }
+}
+
+const test = new Account();
+
+console.log(test.locale);
+```
+
+위의 코드에서 locale property(= field)는 public하다. 다른 function들과는 다르게 세미콜론을 붙여줘야 한다는 점에 주의해야한다.
+
+locale이 public하게 사용된 이유는 constructor function에 의해서 값이 달라지는 것도 아니고 모든 인스턴스에 setting되어야 하기 때문이라고 한다. (movements property도 동일한 이유로 public property로 분류될 수 있다.)
+
+<br>
+
+```js
+class Account {
+  // Public fields (instances)
+  locale = navigator.language;
+
+  //Private fields (instances)
+  #movements = [];
+
+  constructor(owner, currency, pin) {
+    this.owner = owner;
+    this.currency = currency;
+    this._pin = pin;
+  }
+
+  getMovements() {
+    return this.#movements;
+  }
+
+  deposit(val) {
+    this.#movements.push(val);
+  }
+
+  withdraw(val) {
+    this.deposit(-val);
+  }
+}
+
+const test = new Account();
+
+test.deposit("zz");
+console.log(test.getMovements()); // ['zz']
+console.log(test.#movements); //Error
+```
+
+Private field를 사용하려면 field앞에 #을 붙인다. 이렇게 한 뒤에 코드 최하단 부분과 같이 테스트를 해보면 method를 사용해서 field를 참조하는 것은 정상 작동하고, 직접 해당 field에 접근하는 것은 에러가 발생한다.
+
+<br>
+
+<br>
+
+위의 경우는 instance를 생성할 때 parmeter와는 관계없이 항상 빈 배열이기 때문에 저렇게 가능했지만, pin field는 private해야 함과 동시에 파라미터로 받아야 한다. 이 경우에 대한 처리는 다음과 같다.
+
+```js
+class Account {
+  // Public fields (instances, not on prototype)
+  locale = navigator.language;
+
+  //Private fields (instances, not on prototype)
+  #movements = [];
+  #pin; //일단 아무 값도 초기화하지 않고 이렇게 private하게 선언
+
+  constructor(owner, currency, pin) {
+    this.owner = owner;
+    this.currency = currency;
+    this.#pin = pin; // 이곳에서 값 저장
+  }
+}
+```
+
+<br>
+
+<br>
+
+public method의 경우 이전에 사용한 방식과 같으므로 생략하고, 마지막으로 private method 사용법에 대해 알아본다.
+
+```js
+class Account {
+  constructor(owner, currency, pin) {
+    this.owner = owner;
+    this.currency = currency;
+    this.#pin = pin;
+  }
+
+  requestLoan() {
+    this.#approveLoan("승인됨");
+  }
+
+  // Private Method
+  #approveLoan(val) {
+    console.log(val);
+  }
+}
+
+const test = new Account("JONG", "EUR", 1234);
+
+test.requestLoan(); // 승인됨
+```
+
+method의 이름 앞에 #을 붙이고 내부 메소드에 의해서만 실행되도록 한다.
