@@ -1066,20 +1066,127 @@ const storedData = userInput ?? "DEFAULT"; // ?? 사용하면 null이나 undefin
 ## Generics
 
 <br>
-
+ 
 ### What is Generic
 
 - TS에 내장된 타입이며, 타입이 다른 타입과 연결된 것이다.
 
-- 예를 들어, array는 하나의 타입이지만 그 안에 담기는 데이터들의 타입 또한 존재한다.
+- 연결될 다른 타입이 어떤 타입인지는 크게 상관하지 않는다.
+
+- 예를 들어, array는 그 자체로 하나의 타입이지만 그 안에 담기는 데이터들의 타입 또한 존재한다.
+
+```ts
+// Array<T> 제네릭 형식에 1형식 인수가 필요합니다.
+const names: Array = ["Max", "Jong"];
+```
 
 ```ts
 const names: Array<string> = []; // string[]와 같다
 ```
 
-위의 코드처럼 Array안의 데이터들의 타입을 string으로 지정한 것이 generic 타입이다.
+위의 코드의 Array와 같은 타입이 generic 타입이다. (array = generic type)
 
-이것을 통해 names array의 값들은 모두 string타입임을 알 수 있으며 그렇기 때문에 names의 어떤 원소들도 string의 method를 사용할 수 있다.
+이것을 통해 names array의 값들은 모두 string타입임을 알 수 있으며 그렇기 때문에 names의 어떤 원소들도 string의 method를 사용할 수 있다. (중요)
+
+<br>
+
+Promise type도 generic type이다.
+
+```ts
+// const promise: Promise<void>
+const promise = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    resolve("Done And Doone");
+  }, 2000);
+}) //
+  .then((result) => console.log(result.split(" "))); //Error
+```
+
+위의 promise변수는 Promise 타입이다.
+
+그런데 Promise는 결국 어떠한 값을 return하게 되어있다. (settled value) 그렇기 떄문에 Promise도 generic 타입으로 만들어졌다. (Promise 자체도 타입이지만 이것이 return하는 값에 대한 타입도 지정하는 것)
+
+위의 코드와 같이 Promise로부터 return된 fulfilled value를 통해서 string 타입의 method를 사용하고 싶다면 return될 값이 string타입이라는 것을 알려주어야 한다.
+
+```ts
+const promise: Promise<string> = new Promise((resolve, reject) => {
+  // 생략
+});
+```
+
+<br>
+
+### Generic Function 생성하기
+
+```ts
+function merge(objA: object, objB: object) {
+  return Object.assign(objA, objB);
+}
+
+const mergedObj = merge({ name: "Max" }, { age: 30 });
+console.log(mergedObj.name); // Error
+```
+
+위의 코드는 두 object를 입력받아 그것을 병합한 object를 return하는 함수를 작성하고 이를 사용하는 코드이다.
+
+하지만 이 함수의 실행 결과로 만들어진 object에서 name이라는 property에 접근하려 하면 에러가 발생한다.
+
+그 이유는 TS는 이 object가 name이라는 property를 가지는지는 알 수 없기 때문이다.
+
+두 파라미터의 타입이 object이기 때문에 TS는 이 함수의 return value의 타입도 object일 것으로 예상은 한다. 하지만 이 object에 어떤 프로퍼티가 들어있을 지는 알 수 없기 때문에 에러가 발생한다.
+
+이를 해결하기 위해 generic type을 사용한다.
+
+```ts
+// function merge<T, U>(objA: T, objB: U): T & U
+function merge<T, U>(objA: T, objB: U) {
+  return Object.assign(objA, objB);
+}
+
+const mergedObj = merge({ name: "Max" }, { age: 30 });
+console.log(mergedObj.name);
+```
+
+위의 코드에서 objA의 타입은 T, objB의 타입은 U로 설정하였고 merge function의 return value의 타입은 T,U의 intersection으로 정의되었다.
+
+이 방식의 의미는 두 매개변수가 다른 타입이 될 수도 있다고 TS에게 알려주는 것, 그리고 무작위의 (미상의) 객체 타입 (T, U 가 아닌 object type)으로 작업하는 것이 아닌 다양한, 구체적인 객체 타입으로 작업하여 데이터를 얻고자 하는 것임을 알려주는 것이다.
+
+TS는 merge function의 return value type이 T와 U의 intersection임을 알게된다. 따라서 두 파라미터의 프로퍼티를 사용할 수 있게 된다.
+
+장점: return value object의 property에 어떤 값이 들어갈 지 일일히 적어주지 않고 저렇게만 작성해도 알아서 어떤 property가 return value에 존재하는 지 알게된다. (함수 실행 시에 동적으로 타입 설정)
+
+<br>
+
+### Generic Type Constraint
+
+```ts
+function merge<T, U>(objA: T, objB: U) {
+  return Object.assign(objA, objB);
+}
+
+const mergedObj = merge({ name: "Max" }, 30);
+console.log(mergedObj); // {name: "Max"}
+```
+
+이 코드에서 objB의 자리에 object가 아닌 30을 넣었다. 에러는 발생하지 않는다.
+
+왜냐하면 objB는 U로만 타입을 지정했을 뿐 이것이 object인지 아닌지는 정하지 않았기 때문이다.
+
+그렇기 때문에 위와 같은 상황에서 에러를 발생시키기 위해서는 type T와 U에 type constraint 작업을 해야한다.
+
+<br>
+
+```ts
+function merge<T extends object, U extends object>(objA: T, objB: U) {
+  return Object.assign(objA, objB);
+}
+
+const mergedObj = merge({ name: "Max" }, 30); // Error
+```
+
+이렇게 T와 U 타입에 extends를 사용해서 이것이 object타입이어야 한다는 것을 명시한다.
+
+extends의 뒤에는 object가 아닌 다른 타입들, 직접 만든 타입 그리고 유니언 타입 등도 유연하게 사용 가능하다.
 
 <br>
 
