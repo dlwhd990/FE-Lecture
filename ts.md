@@ -60,7 +60,7 @@ button.addEventListener("click", function () {
 
  <br>
 
-```ts
+```js
 const input1 = document.getElementById("num1")! as HTMLInputElement;
 ```
 
@@ -81,7 +81,7 @@ TS는 HTML파일을 읽지 않기 때문에 num1이라는 selector에 해당되�
 
 <br>
 
-```ts
+```js
 function add(num1: number, num2: number) {
   return num1 + num2;
 }
@@ -97,7 +97,7 @@ TS에서는 위와 같이 파라미터 명 오른쪽에 <b>: number</b>와 같�
 
 <br>
 
-```ts
+```js
 let number1 = 5; // 5라는 값이 주어졌기 때문에 ts compiler는 이것이 number 타입임을 알 수 있음 (변할 순 있지만)
 
 let number1: number = 5; // 사용해도 되지만 위에서 말했듯이 number 타입임을 알기 때문에 굳이 필요없음
@@ -112,7 +112,7 @@ str = 5; // Error : 이미 초기화 값 때문에 string 타입이 되었는데
 
 ### Type Alias
 
-```ts
+```js
 type Cominable = number | string; // union 형태의 타입을 미리 저장해놓고 여러번 사용가능
 type User = { name: string; age: number }; // union 아니어도 이렇게 저장 가능
 
@@ -137,7 +137,7 @@ function greet(user: User) {
 
 - 파라미터의 type만큼 return값의 타입도 중요하다.
 
-```ts
+```js
 // add 함수의 return값의 타입을 number로 지정
 // 아래의 경우에는 파라미터들의 타입과 연산 등을 고려하여
 // number값이 return되는 것을 TS가 추론했기 때문에 빨간 밑줄이 생기지 않음
@@ -160,7 +160,7 @@ function add(num1: number, num2: number): string {
 
 - 함수는 변수에 저장될 수 있다. 그렇기 때문에 let으로 선언된 함수가 들어있는 변수는 후에 다른 타입으로 변경될 수 있다. 이 경우에 에러가 발생하기 때문에 이에 대한 처리도 필요하다.
 
-```ts
+```js
 function add(input1: number, input2: number) {
   const result = input1 + input2;
   return result;
@@ -192,7 +192,7 @@ combine = printResult; // 에러 발생
 
 ### Callback Function Type
 
-```ts
+```js
 function addHandle(n1: number, n2: number, cb: (num: number) => void) {
   const result = n1 + n2;
   cb(result);
@@ -229,7 +229,7 @@ addHandle(10, 20, (result) => {
 
 ### This
 
-```ts
+```js
 class Department {
   name: string;
 
@@ -255,7 +255,7 @@ copy.describe(); // Department: undefined
 메소드는 자신을 호출한 object가 this에 바인딩 되기 때문에 undefined가 발생한다.<br>
 하지만 tsc에서는 에러가 발생하지 않았다. 이러한 에러가 뜨게 하기 위해 이렇게 할 수 있다.
 
-```ts
+```js
 describe(this:Department) {
   console.log("Department: " + this.name);
 } //copy.describe에서 컴파일 에러 발생한다.
@@ -265,7 +265,7 @@ describe(this:Department) {
 
 ### Private
 
-```ts
+```js
 class Department {
   name: string;
   employee: string[] = [];
@@ -299,7 +299,7 @@ accounting.employees[1] = "MANU"; // 외부에서 메소드 없이 조작 가능
 
 위와 같이 조작하게 되면 조작법이 통일되지 않음 그래서 외부 조작을 막고싶음
 
-```ts
+```js
 class Department {
   name: string;
   private employees: string[] = []; // private keyword 추가
@@ -314,7 +314,7 @@ private 키워드를 추가해주면 해당 변수는 외부에서 조작하려�
 
 ### 약식초기화
 
-```ts
+```js
 class Department {
   private name: string;
   private id: number;
@@ -329,7 +329,7 @@ class Department {
 위의 코드는 필드를 선언하고 constructor에서 초기화를 시켜주는 과정이다.<br>
 이는 약식 초기화로 코드를 짧게 만들 수 있다.
 
-```ts
+```js
 class Department {
   constructor(private name: string, private id: number) {
     // 여기에도 기존 코드 사용할 필요가 없어짐
@@ -343,7 +343,7 @@ class Department {
 
 - 초기화 후에 값이 변경되지 않아야하는 필드에 readonly를 붙여준다.
 
-```ts
+```js
 class Department {
   private readonly id: number;
   ...
@@ -357,7 +357,7 @@ class Department {
 - 클래스는 다른 클래스를 상속할 수 있다.
 - 상속이라 함은 상속 해주는 클래스의 모든 내용을 상속 받은 클래스가 사용 가능하도록 하는 것이다.
 
-```ts
+```js
 // 상속해줄 클래스
 class Department {
   protected name: string; // private사용하면 자식 클래스에서도 사용을 하지 못한다. 따라서 protected 사용한다.
@@ -400,7 +400,7 @@ newAccounting.itPrint(); // 이종 9990 프론트엔드
 
 - Getter => 메소드 앞에 get붙여야 하며 반드시 무언가를 return해야 한다.
 
-```ts
+```js
 class Test {
   private lastReport: string;
   constructor(report: string) {
@@ -427,7 +427,7 @@ console.log(test.mostRecentReport); // 신고 들어왔습니다.
 
 - Setter는 arguments로 넘길 값이 필요하다.
 
-```ts
+```js
 class Test {
   private lastReport: string;
 
@@ -466,7 +466,7 @@ console.log(test.mostRecentReport); // 새로운 신고입니다 (getter)
 - 예를들어 Math 클래스가 있다.
 - Math.PI 는 파이 값이 있고 Math.pow는 제곱을 계산해준다.
 
-```ts
+```js
 class Department {
   static fiscalYear = 2020;
 
@@ -486,7 +486,7 @@ Class를 grouping mechanism으로 사용할 수 있다. (마치 Math와 같이)
 
 ### Abstract
 
-```ts
+```js
 // 추상 클래스 만들기, 추상 클래스의 추상 메소드 앞에는 abstract를 붙여야 하며 이것을 사용하는 클래스의 앞에도 abstract를 붙여야 한다.
 abstract class Jong {
   constructor(protected id: number) {}
@@ -524,7 +524,7 @@ leejong.describe();
 
 - private를 붙일 경우, new 연산자를 사용하여 새로운 인스턴스를 만드는 것에 에러가 발생한다.
 
-```ts
+```js
 class Accounting {
   private id: number;
   private name: string;
@@ -564,7 +564,7 @@ instance 자체를 필드로 두고, constructor앞에 private를 붙여서 new�
 
 - 메소드를 추가할 수 있다.
 
-```ts
+```js
 interface Person {
   name: string;
   age: number;
@@ -591,7 +591,7 @@ user1.greet("Hi there,"); // Hi there, MAX
 
 - 클래스 선언에도 사용할 수 있다.
 
-```ts
+```js
 interface Greetable {
   name: string;
 
@@ -632,7 +632,7 @@ user1.greet("안녕~~~");
 
 ### Interface Extend
 
-```ts
+```js
 interface Named {
   readonly name: string;
 }
@@ -670,7 +670,7 @@ user1.greet("ㅎㅇㅎㅇ");
 
 ### Function Type Interface
 
-```ts
+```js
 // type AddFn = (a: number, b: number) => number;
 interface AddFn {
   (a: number, b: number): number; // 익명함수
@@ -695,7 +695,7 @@ interface AddFn과 같이 익명함수의 괄호 안에 파라미터를 지정�
 
 ### 선택적 Property & Method
 
-```ts
+```js
 interface Named {
   name?: string;
   outputName?: string; // ? 붙이기
@@ -739,7 +739,7 @@ console.log(user1);
 
 <br>
 
-```ts
+```js
 type Admin = {
   name: String;
   privileges: string[];
@@ -767,7 +767,7 @@ console.log(e1);
 
 - type guard는 유니언 타입을 돕는다.
 
-```ts
+```js
 type Combinable = string | number;
 type Numeric = number | boolean;
 type Universal = Combinable & Numeric; // number type => 두 타입에서 intersection type이 number이기 때문에
@@ -775,7 +775,7 @@ type Universal = Combinable & Numeric; // number type => 두 타입에서 inters
 
 위의 코드는 intersection type덕분에 유연성을 갖지만 런타임 시에 정확히 어떤 타입을 얻게 될지 모를 수 있다.
 
-```ts
+```js
 type Combinable = string | number;
 type Numeric = number | boolean;
 type Universal = Combinable & Numeric;
@@ -802,7 +802,7 @@ console.log(add(23, 32)); //55
 
 typeof로 type guard를 작성하지 못하는 경우도 있다. 아래 예시와 같다.
 
-```ts
+```js
 type Admin = {
   name: String;
   privileges: string[];
@@ -849,7 +849,7 @@ printEmployeeInformation(e1); // Name: Max / privileges: create-server
 
 또 다른 방식의 type guard도 있다.
 
-```ts
+```js
 class Car {
   drive() {
     console.log("Driving...");
@@ -889,7 +889,7 @@ useVehicle(v2);
 
 ### 구분된 Union
 
-```ts
+```js
 interface Bird {
   type: "bird";
   flyingSpeed: number;
@@ -927,7 +927,7 @@ interface이기 때문에 instanceof도 사용할 수 없다 (JS에는 interface
 
 ### 형 변환
 
-```ts
+```js
 // const userInputElement = document.getElementById("user-input")!; // 느낌표 붙여주어 null이 아니라는 것을 알림
 
 // const userInputElement = <HTMLInputElement>document.getElementById("user-input")!
@@ -957,7 +957,7 @@ DOM 엘리먼트 외에도 as string등을 붙여주면 형변환을 할 수 있
 
 - 인터페이스에서 정확한 속성 이름, 속성의 개수를 모를 때, 정하지 않았을 때 사용
 
-```ts
+```js
 //이 인터페이스를 기반으로 만들어진 class의 모든 속성은 문자열 타입의 속성 이름과 문자열 타입의 속성 값을 가져야 한다는 것을 의미한다.
 interface ErrorContainer {
   [prop: string]: string;
@@ -968,7 +968,7 @@ interface ErrorContainer {
 
 그 중에서도 필수적으로 있어야 할 프로퍼티들은 따로 지정할 수 있다. 다만 prop에서 지정한 타입과 같아야한다.
 
-```ts
+```js
 interface ErrorContainer {
   id: string; // 키, 값 모두 string이기 때문에 가능
   [prop: string]: string;
@@ -981,7 +981,7 @@ interface ErrorContainer {
 
 - 동일한 함수에 대해 여러 함수 시그니처를 정의할 수 있다.
 
-```ts
+```js
 type Combinable = string | number;
 type Numeric = number | boolean;
 type Universal = Combinable & Numeric;
@@ -1017,7 +1017,7 @@ function add의 윗 부분처럼 파라미터의 타입에 따라 어떤 타입�
 
 ### Optional Chaining
 
-```ts
+```js
 // 백엔드 서버에서 데이터를 가져왔을 경우를 가정한다. 아래의 데이터는 DB에서 가져온 데이터라고 보자
 const fetchedUserData = {
   id: "u1",
@@ -1048,7 +1048,7 @@ console.log(fetchedUserData?.job?.title); // 불확실한 요소 뒤에 ? 붙여
 
 - 어떠한 데이터나 입력값이 있는데 이것이 null인지 undefined인지 유효한 데이터인지 알 수 없을 경우
 
-```ts
+```js
 // 데이터가 user input이나 DB내의 데이터처럼 null인지 아닌지 알 수 없을 경우를 전제로함 (userInput의 값)
 const userInput = null;
 
@@ -1075,12 +1075,12 @@ const storedData = userInput ?? "DEFAULT"; // ?? 사용하면 null이나 undefin
 
 - 예를 들어, array는 그 자체로 하나의 타입이지만 그 안에 담기는 데이터들의 타입 또한 존재한다.
 
-```ts
+```js
 // Array<T> 제네릭 형식에 1형식 인수가 필요합니다.
 const names: Array = ["Max", "Jong"];
 ```
 
-```ts
+```js
 const names: Array<string> = []; // string[]와 같다
 ```
 
@@ -1092,7 +1092,7 @@ const names: Array<string> = []; // string[]와 같다
 
 Promise type도 generic type이다.
 
-```ts
+```js
 // const promise: Promise<void>
 const promise = new Promise((resolve, reject) => {
   setTimeout(() => {
@@ -1108,7 +1108,7 @@ const promise = new Promise((resolve, reject) => {
 
 위의 코드와 같이 Promise로부터 return된 fulfilled value를 통해서 string 타입의 method를 사용하고 싶다면 return될 값이 string타입이라는 것을 알려주어야 한다.
 
-```ts
+```js
 const promise: Promise<string> = new Promise((resolve, reject) => {
   // 생략
 });
@@ -1118,7 +1118,7 @@ const promise: Promise<string> = new Promise((resolve, reject) => {
 
 ### Generic Function 생성하기
 
-```ts
+```js
 function merge(objA: object, objB: object) {
   return Object.assign(objA, objB);
 }
@@ -1137,7 +1137,7 @@ console.log(mergedObj.name); // Error
 
 이를 해결하기 위해 generic type을 사용한다.
 
-```ts
+```js
 // function merge<T, U>(objA: T, objB: U): T & U
 function merge<T, U>(objA: T, objB: U) {
   return Object.assign(objA, objB);
@@ -1159,7 +1159,7 @@ TS는 merge function의 return value type이 T와 U의 intersection임을 알게
 
 ### Generic Type Constraint
 
-```ts
+```js
 function merge<T, U>(objA: T, objB: U) {
   return Object.assign(objA, objB);
 }
@@ -1176,7 +1176,7 @@ console.log(mergedObj); // {name: "Max"}
 
 <br>
 
-```ts
+```js
 function merge<T extends object, U extends object>(objA: T, objB: U) {
   return Object.assign(objA, objB);
 }
@@ -1218,7 +1218,7 @@ extends의 뒤에는 object가 아닌 다른 타입들, 직접 만든 타입 그
 
 - 객체 타입 => 키, 타입 쌍
 
-```ts
+```js
 const person = {
   name: "maximilian",
   age: 30,
@@ -1247,7 +1247,7 @@ const person : {
 
 - array에는 모든 타입의 값들이 들어갈 수 있다.
 
-```ts
+```js
 let favoriteActivities: string[]; // string타입 값들이 들어가는 배열임을 명시
 let favoriteActivities = "sports"; // 배열 아니므로 tsc에서 에러
 let favoriteActivities = ["sports", 1]; // 1은 string이 아니므로 tsc에러
@@ -1283,7 +1283,7 @@ for (const hobby of person.hobbies) {
 - 길이 뿐만 아니라 타입도 제한되었다.
 - 타입 => 첫 번째 원소 : number 식별자, 두 번째 원소: string 식별자
 
-```ts
+```js
 // role 프로퍼티 위에 마우스 hover 하면 아래 주석과 같은 타입이 나온다 (Union)
 const person = {
   role: [2, "author"], // (property) role: (string | number)[]
@@ -1327,7 +1327,7 @@ person.role = [1, "hi", "hihi"]; // 타입 명시에서 원소 두개를 명시�
 <br><br>
 2번의 경우에는 실제 값은 default로 첫 원소부터 0,1,2, ...의 number가 순차적으로 붙은 값이 되기 때문에 label만 보고 번호로 비교를 할 수 있게 된다. 또는 enum의 원소에 마우스 hover하면 몇 번인지 알려주기도 한다.
 
-```ts
+```js
 enum Role {
   ADMIN,
   READ_ONLY,
@@ -1370,7 +1370,7 @@ enum Role {
 
 - run-time check시에 사용한다. (즉 테스트용) 그 외에는 사용하지 않는 것이 좋다.
 
-```ts
+```js
 // 아래의 코드는 에러를 발생시키지 않는다.
 let inputValue: any;
 let inputString: string;
@@ -1385,7 +1385,7 @@ any 타입의 변수 값을 string타입의 변수에 넣는데도 에러가 발
 
 ### 9. Union
 
-```ts
+```js
 function combine(input1: number, input2: number) {
   const result = input1 + input2;
   return result;
@@ -1416,7 +1416,7 @@ const combinedNames = combine("Max", "Anna"); //정상 작동
 <br><br>
 그런데 실제로 + 연산자를 사용할 수 없는 타입이 들어갈 수도 있는 등의 타입에 따른 문제가 발생할 수 있기 때문에 이를 처리하는 코드가 필요한 경우가 종종 있다.
 
-```ts
+```js
 // 위의 코드와 같은 내용이지만 파라미터들의 타입을 union으로 두 가지 타입을 주었기 때문에 각각의 타입인 경우의 처리 방법을 코드로 추가 작성한 것이다.
 
 function combine(input1: number | string, input2: number | string) {
@@ -1436,7 +1436,7 @@ function combine(input1: number | string, input2: number | string) {
 
 - 변수나 매개변수가 아니고 숫자, 문자열도 아니다. 정확한 값을 가지는 타입이다.
 
-```ts
+```js
 // 마우스 hover하여 타입 보면 <const num: 2.8> 나옴
 // 원래는 2.8 자리에 타입이 들어가있어야 하는데 특정 값이 들어있는 것임
 // 2.8은 분명한 number타입인데 타입 대신 2.8이 들어가있는 이유는 "불변한 값" 이기 때문이다.
@@ -1472,7 +1472,7 @@ const num = 2.8;
 
 - 아직은 사용자가 마지막에 어떤 타입을 입력할 지 모르는 상태에서 사용한다.
 
-```ts
+```js
 // Case 1 : Any
 let userInput: any;
 let userName: string;
