@@ -1098,8 +1098,9 @@ const promise = new Promise((resolve, reject) => {
   setTimeout(() => {
     resolve("Done And Doone");
   }, 2000);
-}) //
-  .then((result) => console.log(result.split(" "))); //Error
+});
+  
+promise.then((result) => console.log(result.split(" "))); //Error
 ```
 
 위의 promise변수는 Promise 타입이다.
@@ -1112,6 +1113,8 @@ const promise = new Promise((resolve, reject) => {
 const promise: Promise<string> = new Promise((resolve, reject) => {
   // 생략
 });
+  
+promise.then((result) => console.log(result.split(" "))); //컴파일 가능
 ```
 
 <br>
